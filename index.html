@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gloria Executive OS | سامانه مدیریت کافه گلوریا</title>
+    <meta name="theme-color" content="#0d0f12">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        :root {
+            --bg-base: #0a0c0e;
+            --bg-surface: #12151a;
+            --bg-card: #181d24;
+            --accent-gold: #d4af37;
+            --accent-gold-hover: #b8972e;
+            --text-main: #f0f2f5;
+            --text-muted: #8a94a6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --border: #232a35;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            padding-bottom: 75px;
+        }
+
+        /* HEADER */
+        header {
+            background: var(--bg-surface);
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-title {
+            font-size: 1.05rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: var(--accent-gold);
+        }
+        .brand-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .badge-live {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: bold;
+        }
+
+        /* CATEGORIES BAR */
+        .cat-scroll {
+            display: flex;
+            gap: 8px;
+            padding: 12px 15px;
+            background: var(--bg-surface);
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+        }
+        .cat-scroll::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            background: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cat-btn.active {
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: bold;
+            border-color: var(--accent-gold);
+        }
+
+        /* MAIN CONTENT AREA */
+        main {
+            padding: 15px;
+            flex: 1;
+        }
+
+        .view-section {
+            display: none;
+        }
+        .view-section.active {
+            display: block;
+        }
+
+        /* POS GRID */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 90px;
+        }
+        .item-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.2s;
+            min-height: 125px;
+        }
+        .item-card:active {
+            transform: scale(0.96);
+            border-color: var(--accent-gold);
+        }
+        .item-icon {
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+        }
+        .item-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+        .item-price {
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* CART FLOATING BAR */
+        .cart-bar {
+            position: fixed;
+            bottom: 70px;
+            left: 15px;
+            right: 15px;
+            background: rgba(24, 29, 36, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--accent-gold);
+            border-radius: 16px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 90;
+        }
+        .cart-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .cart-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .cart-total {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+        }
+        .cart-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-cart-action {
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.82rem;
+        }
+        .btn-clear {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        /* ADMIN DASHBOARD */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .stat-card-title {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .stat-card-val {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+        .stat-card-val.gold { color: var(--accent-gold); }
+        .stat-card-val.green { color: var(--success); }
+
+        .admin-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .admin-block-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        input, select {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            flex: 1;
+            outline: none;
+        }
+        input:focus, select:focus {
+            border-color: var(--accent-gold);
+        }
+        .btn-primary {
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .list-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        .list-table th, .list-table td {
+            padding: 8px;
+            text-align: right;
+            border-bottom: 1px solid var(--border);
+        }
+        .list-table th { color: var(--text-muted); }
+
+        /* FOOTER NAV */
+        nav.nav-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.72rem;
+            background: none;
+            border: none;
+        }
+        .nav-item.active {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="brand-box">
+            <div style="font-size: 1.4rem;">👑</div>
+            <div>
+                <div class="brand-title">GLORIA ENTERPRISE</div>
+                <div class="brand-sub" id="brandStatus">سیستم ابری کافه گلوریا</div>
+            </div>
+        </div>
+        <div class="badge-live" id="timeClock">--:--</div>
+    </header>
+
+    <!-- POS VIEW -->
+    <section id="posSection" class="view-section active">
+        <!-- Categories -->
+        <div class="cat-scroll" id="catBar">
+            <button class="cat-btn active" onclick="filterMenu('all')">همه اقلام</button>
+            <button class="cat-btn" onclick="filterMenu('espresso')">اسپرسو بار</button>
+            <button class="cat-btn" onclick="filterMenu('cold')">سرد و ماکتل</button>
+            <button class="cat-btn" onclick="filterMenu('bakery')">کیک و دسر</button>
+        </div>
+
+        <main>
+            <div class="items-grid" id="itemsContainer">
+                <!-- Loaded Dynamically -->
+            </div>
+        </main>
+
+        <!-- Floating Cart Bar -->
+        <div class="cart-bar" id="cartBar" style="display: none;">
+            <div class="cart-info">
+                <span class="cart-count" id="cartCount">۰ آیتم انتخاب شده</span>
+                <span class="cart-total" id="cartTotal">۰ تومان</span>
+            </div>
+            <div class="cart-actions">
+                <button class="btn-cart-action btn-clear" onclick="clearCart()">حذف</button>
+                <button class="btn-cart-action" onclick="submitOrder()">ثبت فاکتور</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ADMIN VIEW -->
+    <section id="adminSection" class="view-section">
+        <main>
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-title">فروش امروز</div>
+                    <div class="stat-card-val gold" id="statTodaySales">۰ ت</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">تعداد سفارشات</div>
+                    <div class="stat-card-val" id="statOrderCount">۰</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">هزینه‌های ثبت‌شده</div>
+                    <div class="stat-card-val" id="statExpenses">۰ ت</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">سود ناخالص</div>
+                    <div class="stat-card-val green" id="statNetProfit">۰ ت</div>
+                </div>
+            </div>
+
+            <!-- Expense Form -->
+            <div class="admin-block">
+                <div class="admin-block-title">ثبت هزینه / خرید روزانه</div>
+                <div class="input-group">
+                    <input type="text" id="expTitle" placeholder="شرح (مثلاً شیر کاله)">
+                    <input type="number" id="expAmount" placeholder="مبلغ (تومان)">
+                </div>
+                <button class="btn-primary" onclick="addExpense()">ثبت در دخل و خرج</button>
+            </div>
+
+            <!-- Cheque System -->
+            <div class="admin-block">
+                <div class="admin-block-title">دفتر چک و تعهدات</div>
+                <div class="input-group">
+                    <input type="text" id="chkPerson" placeholder="در وجه / صادرکننده">
+                    <input type="number" id="chkAmount" placeholder="مبلغ چک">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="chkDate" placeholder="تاریخ سررسید (مثلاً ۱۴۰۳/۰۶/۱۵)">
+                </div>
+                <button class="btn-primary" onclick="addCheque()">ثبت چک جدید</button>
+
+                <table class="list-table">
+                    <thead>
+                        <tr>
+                            <th>طرف حساب</th>
+                            <th>مبلغ</th>
+                            <th>سررسید</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chequesTableBody">
+                        <!-- Cheque list -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="admin-block" style="border-color: rgba(239, 68, 68, 0.3);">
+                <div class="admin-block-title" style="color: var(--danger);">مدیریت داده‌ها</div>
+                <button class="btn-primary" style="background: var(--danger); color: #fff;" onclick="resetAllData()">ریست و نوسازی دیتابیس</button>
+            </div>
+        </main>
+    </section>
+
+    <!-- FOOTER NAV -->
+    <nav class="nav-bottom">
+        <button class="nav-item active" id="btnNavPos" onclick="switchTab('pos')">
+            <svg viewBox="0 0 24 24"><path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3zm7 17H5V8h14v12z"/></svg>
+            صندوق سفارشات
+        </button>
+        <button class="nav-item" id="btnNavAdmin" onclick="switchTab('admin')">
+            <svg viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></svg>
+            اتاق فرمان مدیر
+        </button>
+    </nav>
+
+    <script>
+        // DEFAULT MENU ITEMS
+        const DEFAULT_MENU = [
+            { id: 1, name: 'اسپرسو سینگل', price: 45000, cat: 'espresso', icon: '☕' },
+            { id: 2, name: 'اسپرسو دبل', price: 60000, cat: 'espresso', icon: '☕' },
+            { id: 3, name: 'آمریکانو', price: 65000, cat: 'espresso', icon: '☕' },
+            { id: 4, name: 'لته آرت', price: 85000, cat: 'espresso', icon: '🥛' },
+            { id: 5, name: 'کاپوچینو', price: 85000, cat: 'espresso', icon: '☕' },
+            { id: 6, name: 'موکا کارامل', price: 95000, cat: 'espresso', icon: '🍫' },
+            { id: 7, name: 'آیس لته', price: 90000, cat: 'cold', icon: '🧊' },
+            { id: 8, name: 'آیس آمریکانو', price: 70000, cat: 'cold', icon: '🧊' },
+            { id: 9, name: 'موهیتو دست‌ساز', price: 85000, cat: 'cold', icon: '🍃' },
+            { id: 10, name: 'چیزکیک نیویورکی', price: 110000, cat: 'bakery', icon: '🍰' },
+            { id: 11, name: 'کوکی دبل چاکلت', price: 55000, cat: 'bakery', icon: '🍪' },
+            { id: 12, name: 'کرواسان کره‌ای', price: 75000, cat: 'bakery', icon: '🥐' }
+        ];
+
+        // STATE
+        let cart = [];
+        let orders = JSON.parse(localStorage.getItem('gloria_orders') || '[]');
+        let expenses = JSON.parse(localStorage.getItem('gloria_expenses') || '[]');
+        let cheques = JSON.parse(localStorage.getItem('gloria_cheques') || '[]');
+        let currentFilter = 'all';
+
+        // CLOCK
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('timeClock').innerText = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // RENDER POS MENU
+        function renderMenu() {
+            const container = document.getElementById('itemsContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const filtered = currentFilter === 'all' 
+                ? DEFAULT_MENU 
+                : DEFAULT_MENU.filter(i => i.cat === currentFilter);
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.onclick = () => addToCart(item);
+                card.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">${item.price.toLocaleString('fa-IR')} ت</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterMenu(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            renderMenu();
+        }
+
+        // CART LOGIC
+        function addToCart(item) {
+            cart.push(item);
+            updateCartUI();
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const cartBar = document.getElementById('cartBar');
+            if (cart.length === 0) {
+                cartBar.style.display = 'none';
+                return;
+            }
+            cartBar.style.display = 'flex';
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('cartCount').innerText = `${cart.length.toLocaleString('fa-IR')} آیتم انتخاب شده`;
+            document.getElementById('cartTotal').innerText = `${total.toLocaleString('fa-IR')} تومان`;
+        }
+
+        function submitOrder() {
+            if (cart.length === 0) return;
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const newOrder = {
+                id: Date.now(),
+                items: cart,
+                total: total,
+                date: new Date().toISOString()
+            };
+            orders.push(newOrder);
+            localStorage.setItem('gloria_orders', JSON.stringify(orders));
+            clearCart();
+            alert('سفارش با موفقیت ثبت شد!');
+            renderAdminStats();
+        }
+
+        // ADMIN LOGIC
+        function switchTab(tab) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+            if (tab === 'pos') {
+                document.getElementById('posSection').classList.add('active');
+                document.getElementById('btnNavPos').classList.add('active');
+            } else {
+                document.getElementById('adminSection').classList.add('active');
+                document.getElementById('btnNavAdmin').classList.add('active');
+                renderAdminStats();
+            }
+        }
+
+        function renderAdminStats() {
+            const totalSales = orders.reduce((sum, o) => sum + o.total, 0);
+            const totalExp = expenses.reduce((sum, e) => sum + e.amount, 0);
+            const netProfit = totalSales - totalExp;
+
+            document.getElementById('statTodaySales').innerText = `${totalSales.toLocaleString('fa-IR')} ت`;
+            document.getElementById('statOrderCount').innerText = orders.length.toLocaleString('fa-IR');
+            document.getElementById('statExpenses').innerText = `${totalExp.toLocaleString('fa-IR')} ت`;
+            document.getElementById('statNetProfit').innerText = `${netProfit.toLocaleString('fa-IR')} ت`;
+
+            // Cheques list
+            const chkBody = document.getElementById('chequesTableBody');
+            chkBody.innerHTML = '';
+            cheques.forEach(chk => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${chk.person}</td>
+                    <td style="color: var(--accent-gold);">${chk.amount.toLocaleString('fa-IR')} ت</td>
+                    <td>${chk.date}</td>
+                `;
+                chkBody.appendChild(tr);
+            });
+        }
+
+        function addExpense() {
+            const title = document.getElementById('expTitle').value;
+            const amount = parseFloat(document.getElementById('expAmount').value);
+            if (!title || !amount) return alert('لطفاً عنوان و مبلغ را وارد کنید');
+
+            expenses.push({ id: Date.now(), title, amount });
+            localStorage.setItem('gloria_expenses', JSON.stringify(expenses));
+            document.getElementById('expTitle').value = '';
+            document.getElementById('expAmount').value = '';
+            renderAdminStats();
+            alert('هزینه ثبت شد');
+        }
+
+        function addCheque() {
+            const person = document.getElementById('chkPerson').value;
+            const amount = parseFloat(document.getElementById('chkAmount').value);
+            const date = document.getElementById('chkDate').value;
+            if (!person || !amount || !date) return alert('تمام فیلدهای چک را پر کنید');
+
+            cheques.push({ id: Date.now(), person, amount, date });
+            localStorage.setItem('gloria_cheques', JSON.stringify(cheques));
+            document.getElementById('chkPerson').value = '';
+            document.getElementById('chkAmount').value = '';
+            document.getElementById('chkDate').value = '';
+            renderAdminStats();
+            alert('چک ثبت شد');
+        }
+
+        function resetAllData() {
+            if (confirm('آیا مطمئن هستید؟ تمام آمار فروش، هزینه‌ها و چک‌ها ریست خواهند شد.')) {
+                localStorage.clear();
+                orders = [];
+                expenses = [];
+                cheques = [];
+                cart = [];
+                updateCartUI();
+                renderAdminStats();
+                renderMenu();
+                alert('سیستم با موفقیت ریست شد.');
+            }
+        }
+
+        // INIT
+        window.addEventListener('DOMContentLoaded', () => {
+            renderMenu();
+        });
+        renderMenu();
+    </script>
+</body>
+</html>
+
