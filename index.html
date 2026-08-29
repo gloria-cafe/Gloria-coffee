@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GLORIA OS | سامانه جامع هوشمند مدیریت کافه</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { font-family: 'Vazirmatn', sans-serif; box-sizing: border-box; }
+        body { background-color: #0b0f19; color: #f8fafc; }
+        .glass-panel { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.07); }
+        .glass-card { background: #131d2f; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%); }
+        .gold-border { border-color: rgba(245, 158, 11, 0.4); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+        .nav-btn.active { background: #f59e0b; color: #0b0f19; font-weight: 800; shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.39); }
+        .cat-pill.active { background: #f59e0b; color: #0b0f19; font-weight: 700; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-2 sm:p-4 text-slate-200">
+
+    <!-- هدر ارشد و مانیتورینگ وضعیت اتصال دیتابیس -->
+    <header class="glass-panel rounded-2xl p-3 mb-3 flex flex-wrap justify-between items-center gap-3 shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-slate-950 font-black text-lg shadow-lg">☕</div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-black text-base sm:text-lg text-amber-400 tracking-wider">GLORIA EXECUTIVE OS</h1>
+                    <span id="dbStatus" class="inline-flex items-center gap-1 text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> سرور متصل
+                    </span>
+                </div>
+                <p class="text-[11px] text-slate-400">سامانه هوشمند ابری صندوق، دخل و انبارداری کافه گلوریا</p>
+            </div>
+        </div>
+
+        <!-- کنترل تب‌ها -->
+        <nav class="flex bg-slate-900/90 p-1 rounded-xl border border-slate-800 gap-1 text-xs">
+            <button onclick="navigateTab('pos')" id="tabPos" class="nav-btn active px-3.5 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-cash-register"></i> <span>صندوق فروش</span>
+            </button>
+            <button onclick="navigateTab('shift')" id="tabShift" class="nav-btn text-slate-400 hover:text-white px-3.5 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-scale-balanced"></i> <span>گزارش شیفت</span>
+            </button>
+            <button onclick="navigateTab('archive')" id="tabArchive" class="nav-btn text-slate-400 hover:text-white px-3.5 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                <i class="fa-solid fa-box-archive"></i> <span>بایگانی کل</span>
+            </button>
+            <button onclick="openAdminAuth()" id="tabAdmin" class="nav-btn bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 px-3.5 py-2 rounded-lg font-bold transition flex items-center gap-2 border border-amber-500/30">
+                <i class="fa-solid fa-crown"></i> <span>پنل مدیریت</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- تب ۱: صندوق فروش سریع (POS) -->
+    <main id="sectionPos" class="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1">
+        <!-- منوی دسته‌بندی و کارت‌های محصولات -->
+        <div class="lg:col-span-8 flex flex-col gap-3">
+            <div class="glass-panel p-2 rounded-2xl flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar">
+                <div class="flex gap-2" id="categoryTabs">
+                    <button onclick="filterCategory('all')" class="cat-pill active px-3 py-1.5 rounded-xl text-xs whitespace-nowrap bg-slate-800 text-slate-300">همه اقلام</button>
+                    <button onclick="filterCategory('اسپرسو بار')" class="cat-pill px-3 py-1.5 rounded-xl text-xs whitespace-nowrap bg-slate-800 text-slate-300">☕ اسپرسو بار</button>
+                    <button onclick="filterCategory('بار سرد')" class="cat-pill px-3 py-1.5 rounded-xl text-xs whitespace-nowrap bg-slate-800 text-slate-300">🧊 بار سرد و شیک</button>
+                    <button onclick="filterCategory('کیک و دسر')" class="cat-pill px-3 py-1.5 rounded-xl text-xs whitespace-nowrap bg-slate-800 text-slate-300">🍰 کیک و وافل</button>
+                    <button onclick="filterCategory('غذا و اسنک')" class="cat-pill px-3 py-1.5 rounded-xl text-xs whitespace-nowrap bg-slate-800 text-slate-300">🥪 تست و ساندویچ</button>
+                </div>
+                <div class="relative min-w-[140px]">
+                    <input id="searchMenu" oninput="searchMenuItems()" type="text" placeholder="جستجو سریع..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-xs text-slate-200 outline-none focus:border-amber-500">
+                </div>
+            </div>
+
+            <!-- کارت‌های آیتم‌ها -->
+            <div id="posGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 overflow-y-auto custom-scrollbar max-h-[calc(100vh-210px)] p-0.5"></div>
+        </div>
+
+        <!-- فاکتور جاری و پرداخت -->
+        <div class="lg:col-span-4 flex flex-col">
+            <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between flex-1 h-full min-h-[500px]">
+                <div>
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <h2 class="font-bold text-sm text-slate-100">فاکتور جاری میز / مشتری</h2>
+                        </div>
+                        <button onclick="resetCart()" class="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 transition">
+                            <i class="fa-solid fa-rotate-right"></i> صفر کردن
+                        </button>
+                    </div>
+
+                    <!-- اقلام انتخاب شده -->
+                    <div id="cartList" class="space-y-2 overflow-y-auto custom-scrollbar max-h-[260px] pr-1">
+                        <div class="text-center text-slate-500 text-xs py-14">
+                            <i class="fa-solid fa-basket-shopping text-2xl mb-2 text-slate-600 block"></i>
+                            هنوز آیتمی انتخاب نشده است
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جمع کل و دکمه‌های تسویه -->
+                <div class="border-t border-slate-800 pt-3 space-y-3 mt-3">
+                    <div class="space-y-1 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span>تعداد کل سفارش:</span>
+                            <span id="cartCount" class="font-bold text-slate-200">۰ عدد</span>
+                        </div>
+                        <div class="flex justify-between text-sm items-center pt-1 border-t border-slate-800">
+                            <span class="font-extrabold text-slate-300">مبلغ نهایی قابل پرداخت:</span>
+                            <span class="text-lg font-black text-amber-400"><span id="cartTotal">۰</span> <span class="text-xs font-normal text-slate-400">تومان</span></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="submitOrder('pos')" class="bg-sky-600 hover:bg-sky-500 active:scale-95 text-white font-bold py-3 rounded-xl text-xs flex flex-col items-center justify-center gap-1 shadow-lg transition">
+                            <i class="fa-solid fa-credit-card text-base"></i>
+                            <span>پرداخت با پوز (کارتخوان)</span>
+                        </button>
+                        <button onclick="submitOrder('cash')" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-3 rounded-xl text-xs flex flex-col items-center justify-center gap-1 shadow-lg transition">
+                            <i class="fa-solid fa-money-bill-wave text-base"></i>
+                            <span>پرداخت نقدی</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- تب ۲: گزارش شیفت پرسنل (Shift Balance) -->
+    <main id="sectionShift" class="hidden grid-cols-1 lg:grid-cols-12 gap-3 flex-1">
+        <div class="lg:col-span-8 space-y-3">
+            <!-- کارت‌های وضعیت ریالی شیفت -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="glass-panel p-3 rounded-2xl border-b-2 border-b-sky-500">
+                    <p class="text-[11px] text-slate-400">فروش کل کارتخوان</p>
+                    <p id="shiftPos" class="text-base font-black text-sky-400 mt-1">۰ ت</p>
+                </div>
+                <div class="glass-panel p-3 rounded-2xl border-b-2 border-b-emerald-500">
+                    <p class="text-[11px] text-slate-400">فروش کل نقدی</p>
+                    <p id="shiftCash" class="text-base font-black text-emerald-400 mt-1">۰ ت</p>
+                </div>
+                <div class="glass-panel p-3 rounded-2xl border-b-2 border-b-rose-500">
+                    <p class="text-[11px] text-slate-400">کل هزینه‌های تنخواه</p>
+                    <p id="shiftExpensesTotal" class="text-base font-black text-rose-400 mt-1">۰ ت</p>
+                </div>
+                <div class="glass-panel p-3 rounded-2xl border-b-2 border-b-amber-500">
+                    <p class="text-[11px] text-slate-400">صافی موجودی صندوق</p>
+                    <p id="shiftNetTotal" class="text-base font-black text-amber-400 mt-1">۰ ت</p>
+                </div>
+            </div>
+
+            <!-- فاکتورها و هزینه‌های شیفت فعلی -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="glass-panel p-4 rounded-2xl h-80 flex flex-col">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-2">
+                        <span class="font-bold text-xs text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-receipt"></i> فاکتورهای شیفت جاری</span>
+                        <span id="shiftOrdersCount" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400">۰ فیش</span>
+                    </div>
+                    <div id="shiftOrdersList" class="space-y-1.5 overflow-y-auto custom-scrollbar flex-1 text-xs pr-1"></div>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl h-80 flex flex-col">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-2">
+                        <span class="font-bold text-xs text-rose-400 flex items-center gap-1.5"><i class="fa-solid fa-file-invoice-dollar"></i> هزینه‌های ثبت‌شده شیفت</span>
+                        <span id="shiftExpCount" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-400">۰ مورد</span>
+                    </div>
+                    <div id="shiftExpensesList" class="space-y-1.5 overflow-y-auto custom-scrollbar flex-1 text-xs pr-1"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- سایدبار ثبت تنخواه و پایان شیفت -->
+        <div class="lg:col-span-4 space-y-3">
+            <div class="glass-panel p-4 rounded-2xl space-y-3 border-rose-500/20">
+                <h3 class="font-bold text-xs text-rose-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i> ثبت هزینه فوری تنخواه</h3>
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-1 block">شرح خرید (مانند خرید یخ، شیر، بار، اسنپ):</label>
+                    <input id="expenseTitleInput" type="text" placeholder="عنوان خرید..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-rose-500">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 mb-1 block">مبلغ پرداختی (تومان):</label>
+                    <input id="expenseAmountInput" type="number" placeholder="مثلاً ۵۰۰۰۰" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-rose-500">
+                </div>
+                <button onclick="submitExpenseOnline()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-receipt"></i> کسر از دخل و ثبت دائم
+                </button>
+            </div>
+
+            <div class="glass-panel p-4 rounded-2xl space-y-2.5 bg-amber-950/20 border-amber-500/30 text-center">
+                <h4 class="font-black text-xs text-amber-400">تحویل صندوق و بستن شیفت</h4>
+                <p class="text-[10px] text-slate-400 leading-relaxed">با بستن شیفت، صورت‌جلسه حسابداری صادر شده و دخل برای شیفت بعدی صفر و آماده می‌شود.</p>
+                <button onclick="finalizeShift()" class="w-full gold-gradient text-slate-950 font-black py-3 rounded-xl text-xs shadow-lg transition active:scale-95">
+                    <i class="fa-solid fa-lock mr-1"></i> بستن شیفت و صدور صورت‌جلسه
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- تب ۳: بایگانی کل فاکتورها و سوابق (Archive System) -->
+    <main id="sectionArchive" class="hidden flex-col gap-3 flex-1">
+        <div class="glass-panel p-4 rounded-2xl flex flex-wrap justify-between items-center gap-3">
+            <div>
+                <h2 class="font-black text-sm text-amber-400 flex items-center gap-2"><i class="fa-solid fa-box-archive"></i> بایگانی آنلاین تمام سفارشات و هزینه‌ها</h2>
+                <p class="text-[11px] text-slate-400">تمام فیش‌های ثبت شده با جزئیات کامل روی سرور ابری Supabase</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="fetchOnlineArchive()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 text-slate-200 transition">
+                    <i class="fa-solid fa-rotate mr-1"></i> بازخوانی از دیتابیس
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-3 flex-1 overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right text-xs">
+                <thead>
+                    <tr class="border-b border-slate-800 text-slate-400 pb-2">
+                        <th class="p-2">شناسه</th>
+                        <th class="p-2">اقلام فاکتور</th>
+                        <th class="p-2">مبلغ کل</th>
+                        <th class="p-2">روش پرداخت</th>
+                        <th class="p-2">وضعیت</th>
+                        <th class="p-2">تاریخ و زمان</th>
+                    </tr>
+                </thead>
+                <tbody id="archiveTableBody" class="divide-y divide-slate-800/60">
+                    <tr><td colspan="6" class="text-center py-10 text-slate-500">در حال دریافت داده‌ها از دیتابیس...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- تب ۴: پنل مدیریت ارشد (Admin & Settings) -->
+    <main id="sectionAdmin" class="hidden space-y-3 flex-1">
+        <div class="glass-panel p-4 rounded-2xl flex justify-between items-center border-amber-500/40">
+            <div>
+                <h2 class="font-black text-base text-amber-400 flex items-center gap-2"><i class="fa-solid fa-crown"></i> اتاق کنترل و مدیریت قیمت‌های کافه گلوریا</h2>
+                <p class="text-[11px] text-slate-400">تنظیم نرخ منو، ثبت و تغییر فوری در پایگاه داده</p>
+            </div>
+            <button onclick="saveMenuChangesOnline()" class="gold-gradient text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-lg transition active:scale-95">
+                <i class="fa-solid fa-cloud-arrow-up mr-1"></i> ذخیره دائم قیمت‌ها در سرور
+            </button>
+        </div>
+
+        <!-- مدیریت قیمت‌های منو -->
+        <div class="glass-panel p-4 rounded-2xl">
+            <h3 class="font-bold text-xs text-slate-200 border-b border-slate-800 pb-2 mb-3">ویرایش زنده نرخ اقلام منو:</h3>
+            <div id="adminPriceList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
+        </div>
+    </main>
+
+    <!-- پاپ‌آپ رمز عبور مدیر -->
+    <div id="adminModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-3xl max-w-sm w-full text-center space-y-4 border border-amber-500/40 shadow-2xl">
+            <div class="w-14 h-14 mx-auto rounded-2xl gold-gradient flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">👑</div>
+            <div>
+                <h3 class="font-black text-sm text-amber-400">احراز هویت مدیریت گلوریا</h3>
+                <p class="text-[11px] text-slate-400 mt-1">رمز ورود مدیر را وارد نمایید</p>
+            </div>
+            <input id="adminPassInput" type="password" placeholder="••••" class="w-full text-center tracking-widest bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-amber-500 text-base font-bold">
+            <div class="flex gap-2">
+                <button onclick="checkAdminPassword()" class="flex-1 gold-gradient text-slate-950 font-black py-2.5 rounded-xl text-xs transition">ورود به پنل</button>
+                <button onclick="closeAdminAuth()" class="px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs">انصراف</button>
+            </div>
+            <p id="adminPassError" class="text-rose-400 text-xs hidden font-bold">رمز عبور نادرست است!</p>
+        </div>
+    </div>
+
+    <!-- اسکریپت‌های لاجیک و اتصال به Supabase -->
+    <script>
+        // کانفیگ دیتابیس Supabase
+        const SUPABASE_URL = "https://erqoumgshxtrpnyngtyg.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycW91bWdzaHh0cnBueW5ndHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAxNzgzMTksImV4cCI6MjA1NTc1NDMxOX0.eKq3o4Z476XUoZ4jI7f7dK6Y4Y3o4Z476XUoZ4jI7f7";
+        
+        let supabaseClient = null;
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch(e) {
+            console.error("Supabase init error", e);
+        }
+
+        // اقلام منوی پیش‌فرض
+        let menuItems = [
+            { id: 1, name: "اسپرسو سینگل", category: "اسپرسو بار", price: 45000, icon: "☕" },
+            { id: 2, name: "اسپرسو دبل", category: "اسپرسو بار", price: 55000, icon: "☕" },
+            { id: 3, name: "آمریکانو داغ", category: "اسپرسو بار", price: 65000, icon: "☕" },
+            { id: 4, name: "کاپوچینو ایتالیایی", category: "اسپرسو بار", price: 80000, icon: "🥛" },
+            { id: 5, name: "لاته آرت مخصوص", category: "اسپرسو بار", price: 85000, icon: "☕" },
+            { id: 6, name: "موکا چاکلت داغ", category: "اسپرسو بار", price: 95000, icon: "🍫" },
+            { id: 7, name: "آیس آمریکانو", category: "بار سرد", price: 70000, icon: "🧊" },
+            { id: 8, name: "آیس لاته وانیل", category: "بار سرد", price: 90000, icon: "🧊" },
+            { id: 9, name: "شیک نوتلا فندق", category: "بار سرد", price: 125000, icon: "🥤" },
+            { id: 10, name: "شیک بادام زمینی", category: "بار سرد", price: 115000, icon: "🥤" },
+            { id: 11, name: "کیک دابل چاکلت", category: "کیک و دسر", price: 75000, icon: "🍰" },
+            { id: 12, name: "چیز کیک سن سباستین", category: "کیک و دسر", price: 95000, icon: "🧀" },
+            { id: 13, name: "وافل ویژه با میوه و نوتلا", category: "کیک و دسر", price: 135000, icon: "🧇" },
+            { id: 14, name: "ساندویچ کلاب مرغ گریل", category: "غذا و اسنک", price: 120000, icon: "🥪" },
+            { id: 15, name: "کروسان تست ژامبون پنیر", category: "غذا و اسنک", price: 125000, icon: "🥐" }
+        ];
+
+        // بازیابی تنظیمات قیمت‌های ذخیره شده محلی
+        const savedPrices = localStorage.getItem('gloria_menu_prices');
+        if (savedPrices) {
+            try {
+                const parsed = JSON.parse(savedPrices);
+                menuItems.forEach(item => {
+                    if (parsed[item.id]) item.price = parsed[item.id];
+                });
+            } catch(e){}
+        }
+
+        let cart = {};
+        let currentCategory = 'all';
+        let shiftSales = JSON.parse(localStorage.getItem('gloria_shift_sales') || '[]');
+        let shiftExpenses = JSON.parse(localStorage.getItem('gloria_shift_expenses') || '[]');
+        let isAdminAuthenticated = false;
+
+        // راه‌اندازی و ناوبری
+        function navigateTab(tab) {
+            ['pos', 'shift', 'archive', 'admin'].forEach(t => {
+                const sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
+                const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (sec) sec.classList.add('hidden');
+                if (sec && t === 'pos') sec.classList.remove('grid');
+                if (sec && t === 'shift') sec.classList.remove('grid');
+                if (sec && t === 'archive') sec.classList.remove('flex');
+                if (btn) btn.className = "nav-btn text-slate-400 hover:text-white px-3.5 py-2 rounded-lg font-bold transition flex items-center gap-2";
+            });
+
+            const activeBtn = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            const activeSec = document.getElementById('section' + tab.charAt(0).toUpperCase() + tab.slice(1));
+
+            if (activeSec) {
+                activeSec.classList.remove('hidden');
+                if (tab === 'pos') activeSec.classList.add('grid');
+                if (tab === 'shift') { activeSec.classList.add('grid'); renderShiftView(); }
+                if (tab === 'archive') { activeSec.classList.add('flex'); fetchOnlineArchive(); }
+                if (tab === 'admin') renderAdminView();
+            }
+            if (activeBtn) {
+                activeBtn.className = "nav-btn active px-3.5 py-2 rounded-lg font-bold transition flex items-center gap-2";
+            }
+        }
+
+        function openAdminAuth() {
+            if (isAdminAuthenticated) {
+                navigateTab('admin');
+            } else {
+                document.getElementById('adminModal').classList.remove('hidden');
+                document.getElementById('adminPassInput').focus();
+            }
+        }
+
+        function closeAdminAuth() {
+            document.getElementById('adminModal').classList.add('hidden');
+            document.getElementById('adminPassError').classList.add('hidden');
+            document.getElementById('adminPassInput').value = '';
+        }
+
+        function checkAdminPassword() {
+            const val = document.getElementById('adminPassInput').value.trim();
+            if (val === '1234' || val === 'gloria' || val === 'admin') {
+                isAdminAuthenticated = true;
+                closeAdminAuth();
+                navigateTab('admin');
+            } else {
+                document.getElementById('adminPassError').classList.remove('hidden');
+            }
+        }
+
+        // رندر منوی POS
+        function renderPOSMenu(itemsToRender = null) {
+            const container = document.getElementById('posGrid');
+            const items = itemsToRender || (currentCategory === 'all' ? menuItems : menuItems.filter(i => i.category === currentCategory));
+            
+            container.innerHTML = items.map(item => `
+                <div onclick="addItemToCart(${item.id})" class="glass-card hover:border-amber-500/60 transition-all duration-200 cursor-pointer p-3 rounded-2xl flex flex-col justify-between h-28 select-none active:scale-95 group">
+                    <div class="flex justify-between items-start">
+                        <span class="text-2xl group-hover:scale-110 transition-transform">${item.icon}</span>
+                        <span class="text-[9px] bg-slate-800/90 text-slate-400 px-1.5 py-0.5 rounded-lg">${item.category}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs text-slate-100 line-clamp-1">${item.name}</h4>
+                        <div class="text-[12px] font-black text-amber-400 mt-1">${item.price.toLocaleString('fa-IR')} <span class="text-[9px] font-normal text-slate-400">ت</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderPOSMenu();
+        }
+
+        function searchMenuItems() {
+            const query = document.getElementById('searchMenu').value.trim().toLowerCase();
+            if (!query) {
+                renderPOSMenu();
+                return;
+            }
+            const filtered = menuItems.filter(i => i.name.toLowerCase().includes(query) || i.category.toLowerCase().includes(query));
+            renderPOSMenu(filtered);
+        }
+
+        // مدیریت سبد خرید
+        function addItemToCart(id) {
+            cart[id] = (cart[id] || 0) + 1;
+            renderCartUI();
+        }
+
+        function updateCartItemQty(id, delta) {
+            if (!cart[id]) return;
+            cart[id] += delta;
+            if (cart[id] <= 0) delete cart[id];
+            renderCartUI();
+        }
+
+        function resetCart() {
+            cart = {};
+            renderCartUI();
+        }
+
+        function renderCartUI() {
+            const list = document.getElementById('cartList');
+            const keys = Object.keys(cart);
+            let total = 0, count = 0;
+
+            if (keys.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center text-slate-500 text-xs py-14">
+                        <i class="fa-solid fa-basket-shopping text-2xl mb-2 text-slate-600 block"></i>
+                        هنوز آیتمی انتخاب نشده است
+                    </div>
+                `;
+            } else {
+                list.innerHTML = keys.map(id => {
+                    const item = menuItems.find(i => i.id == id);
+                    const qty = cart[id];
+                    const subtotal = item.price * qty;
+                    total += subtotal;
+                    count += qty;
+                    return `
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 flex justify-between items-center text-xs">
+                            <div class="flex-1 pr-1">
+                                <div class="font-bold text-slate-200">${item.name}</div>
+                                <div class="text-[10px] text-amber-400 font-bold mt-0.5">${subtotal.toLocaleString('fa-IR')} تومان</div>
+                            </div>
+                            <div class="flex items-center gap-2 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
+                                <button onclick="updateCartItemQty(${item.id}, -1)" class="text-rose-400 font-bold px-1 text-sm hover:scale-110">-</button>
+                                <span class="font-black text-slate-100 text-xs">${qty.toLocaleString('fa-IR')}</span>
+                                <button onclick="updateCartItemQty(${item.id}, 1)" class="text-emerald-400 font-bold px-1 text-sm hover:scale-110">+</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('cartCount').innerText = count.toLocaleString('fa-IR') + ' عدد';
+            document.getElementById('cartTotal').innerText = total.toLocaleString('fa-IR');
+        }
+
+        // ثبت سفارش در Supabase آنلاین و شیفت محلی
+        async function submitOrder(paymentMethod) {
+            const keys = Object.keys(cart);
+            if (keys.length === 0) {
+                alert('لطفاً ابتدا حداقل یک سفارش انتخاب کنید.');
+                return;
+            }
+
+
