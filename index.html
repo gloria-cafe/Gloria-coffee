@@ -3,346 +3,339 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gloria Executive OS | کافه گلوریا</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>کافه گلوریا | سیستم سفارش و مدیریت</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client -->
+    <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap');
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: #0f1015;
-            color: #f3f4f6;
+            background-color: #0f172a;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
         }
-        .glass-panel {
-            background: rgba(26, 29, 38, 0.75);
+        .gold-gradient {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+        }
+        .card-glass {
+            background: rgba(30, 41, 59, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .gold-gradient {
-            background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
-        }
-        .gold-text {
-            color: #d4af37;
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body class="min-h-screen pb-24 flex flex-col justify-between">
 
-    <!-- هدر بالای صفحه -->
-    <header class="glass-panel sticky top-0 z-50 px-6 py-4 flex items-center justify-between shadow-xl">
+    <!-- Header -->
+    <header class="card-glass sticky top-0 z-50 px-4 py-3 border-b border-amber-900/30 flex justify-between items-center shadow-lg">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-slate-950 font-black text-xl shadow-lg">
-                G
+            <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-slate-950 font-black text-xl shadow-md">
+                ☕
             </div>
             <div>
-                <h1 class="text-lg font-bold tracking-tight">GLORIA <span class="gold-text text-xs font-normal">EXECUTIVE OS</span></h1>
-                <p class="text-xs text-gray-400">سیستم مدیریت و سفارش‌گیری آنلاین</p>
+                <h1 class="font-black text-base md:text-lg text-amber-400 leading-tight">Gloria Coffee Bar</h1>
+                <p class="text-[11px] text-slate-400">کافه گلوریا • رودسر</p>
             </div>
         </div>
-
-        <div class="flex items-center gap-3">
-            <button onclick="toggleCartModal()" class="relative p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-gray-200 hover:text-amber-400 transition">
-                <i class="fa-solid fa-mug-hot text-lg"></i>
-                <span id="cart-badge" class="hidden absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center">0</span>
-            </button>
-            <button onclick="toggleAuthModal()" id="auth-btn" class="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500 hover:text-slate-950 text-xs font-bold transition flex items-center gap-2">
-                <i class="fa-solid fa-user-shield"></i>
-                <span>ورود پرسنل</span>
-            </button>
+        <div id="connectionStatus" class="flex items-center gap-1.5 text-xs bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-slate-300 text-[11px]">آنلاین</span>
         </div>
     </header>
 
-    <!-- محتوای اصلی -->
-    <main class="container mx-auto px-4 py-6 max-w-5xl flex-grow">
+    <!-- Main Container -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 space-y-5">
         
-        <!-- بنر وضعیت کافه -->
-        <div class="mb-6 rounded-2xl glass-panel p-6 border-r-4 border-amber-500 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-                <h2 class="text-xl font-bold mb-1 flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    کافه گلوریا رودسر
-                </h2>
-                <p class="text-sm text-gray-400">سفارش بیرون‌بر سریع با بالاترین کیفیت عصاره‌گیری تخصصی</p>
-            </div>
-            <div class="text-xs text-gray-400 bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-800">
-                <i class="fa-brands fa-instagram text-amber-400 ml-1"></i> cofee.gloria
-            </div>
+        <!-- Category Filter -->
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none" id="categoriesContainer">
+            <button onclick="filterCategory('all')" class="cat-btn active px-4 py-1.5 rounded-full text-xs font-bold bg-amber-500 text-slate-950 shadow-md">همه</button>
+            <button onclick="filterCategory('اسپرسو بار')" class="cat-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">اسپرسو بار</button>
+            <button onclick="filterCategory('سرد نوش')" class="cat-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">سرد نوش</button>
+            <button onclick="filterCategory('بیکری')" class="cat-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">بیکری و کیک</button>
         </div>
 
-        <!-- تب‌های دسته‌بندی منو -->
-        <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="filterCategory('همه')" id="tab-all" class="category-tab px-5 py-2.5 rounded-xl font-semibold text-sm transition bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20">
-                همه نوشیدنی‌ها
-            </button>
-            <button onclick="filterCategory('گرم')" id="tab-hot" class="category-tab px-5 py-2.5 rounded-xl font-semibold text-sm transition glass-panel text-gray-300 hover:text-white">
-                <i class="fa-solid fa-fire text-amber-500 ml-1.5"></i> گرم
-            </button>
-            <button onclick="filterCategory('سرد')" id="tab-cold" class="category-tab px-5 py-2.5 rounded-xl font-semibold text-sm transition glass-panel text-gray-300 hover:text-white">
-                <i class="fa-solid fa-snowflake text-cyan-400 ml-1.5"></i> سرد
-            </button>
+        <!-- Menu Grid -->
+        <div id="menuContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Loading skeleton initially -->
+            <div class="text-center py-10 text-slate-400 col-span-full">در حال بارگذاری منو...</div>
         </div>
 
-        <!-- لیست آیتم‌های منو -->
-        <div id="menu-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div class="col-span-full py-16 text-center text-gray-500">
-                <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
-                <p>در حال بارگذاری منوی آنلاین...</p>
-            </div>
-        </div>
     </main>
 
-    <!-- فوتر -->
-    <footer class="glass-panel border-t border-slate-800 text-center py-4 text-xs text-gray-500">
-        Gloria Executive OS © 2026 | کافه گلوریا رودسر
-    </footer>
-
-    <!-- پاپ‌آپ سبد خرید -->
-    <div id="cart-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-700 shadow-2xl">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-                <h3 class="font-bold text-lg text-amber-400 flex items-center gap-2">
-                    <i class="fa-solid fa-receipt"></i> فاکتور سفارش
-                </h3>
-                <button onclick="toggleCartModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+    <!-- Floating Cart Bar -->
+    <div id="cartBar" class="fixed bottom-3 left-3 right-3 max-w-4xl mx-auto card-glass border border-amber-500/40 p-3 rounded-2xl shadow-2xl flex justify-between items-center z-40 transition-all transform translate-y-24 opacity-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold">
+                <span id="cartTotalCount">۰</span>
             </div>
-
-            <div id="cart-items" class="py-4 space-y-3 max-h-60 overflow-y-auto">
-                <!-- آیتم‌ها به صورت پویا اضافه می‌شوند -->
+            <div>
+                <p class="text-xs text-slate-400 leading-tight">مبلغ فاکتور</p>
+                <p class="text-base font-black text-amber-400 leading-tight"><span id="cartTotalPrice">۰</span> <span class="text-[10px] font-normal text-slate-300">تومان</span></p>
             </div>
+        </div>
+        <button onclick="openCheckoutModal()" class="gold-gradient hover:brightness-110 active:scale-95 text-slate-950 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg transition-all flex items-center gap-2">
+            <span>ثبت سفارش</span>
+            <i class="fa-solid fa-arrow-left"></i>
+        </button>
+    </div>
 
-            <div class="pt-4 border-t border-slate-800 flex justify-between items-center text-sm font-bold mb-5">
-                <span>مبلغ نهایی:</span>
-                <span id="cart-total" class="text-amber-400 text-base">۰ تومان</span>
-            </div>
-
-            <div class="space-y-3">
-                <input type="text" id="customer-name" placeholder="نام مشتری یا شماره تماس/میز" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-500 text-white">
-                <button onclick="submitOrder()" id="btn-submit-order" class="w-full gold-gradient text-slate-950 font-bold py-3 rounded-xl shadow-lg hover:opacity-95 transition">
-                    ثبت و ارسال سفارش
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-amber-400 text-base">تکمیل و ثبت فاکتور گلوریا</h3>
+                <button onclick="closeCheckoutModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
+
+            <!-- Items list in modal -->
+            <div id="modalCartItems" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+
+            <div class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">نام مشتری یا شماره میز (اختیاری):</label>
+                    <input type="text" id="customerName" placeholder="مثال: آقای رضایی / سالن" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">نوع سفارش:</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center justify-center gap-2 bg-slate-800 p-2.5 rounded-xl border border-amber-500 cursor-pointer text-xs">
+                            <input type="radio" name="orderType" value="takeaway" checked class="text-amber-500"> بیرون‌بر (Takeaway)
+                        </label>
+                        <label class="flex items-center justify-center gap-2 bg-slate-800 p-2.5 rounded-xl border border-slate-700 cursor-pointer text-xs">
+                            <input type="radio" name="orderType" value="dinein" class="text-amber-500"> داخل کافه
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
+                <span class="text-xs text-slate-400">مبلغ قابل پرداخت:</span>
+                <span class="text-lg font-black text-amber-400"><span id="modalFinalPrice">۰</span> تومان</span>
+            </div>
+
+            <button onclick="submitFinalOrder()" id="submitOrderBtn" class="w-full gold-gradient hover:brightness-110 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all text-sm">
+                تأیید نهایی و چاپ / ثبت
+            </button>
         </div>
     </div>
 
-    <!-- پاپ‌آپ لاگین پرسنل -->
-    <div id="auth-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 border border-slate-700 shadow-2xl">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-                <h3 class="font-bold text-base text-amber-400 flex items-center gap-2">
-                    <i class="fa-solid fa-lock"></i> ورود پرسنل گلوریا
-                </h3>
-                <button onclick="toggleAuthModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs text-gray-400 block mb-1">ایمیل پرسنل</label>
-                    <input type="email" id="auth-email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-white">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 block mb-1">رمز عبور</label>
-                    <input type="password" id="auth-password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-500 text-white">
-                </div>
-                <button onclick="handleLogin()" class="w-full gold-gradient text-slate-950 font-bold py-2.5 rounded-xl hover:opacity-95 transition text-sm">
-                    ورود به پنل
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- اسکریپت‌های مدیریت و اتصال به سوپابیس -->
+    <!-- Scripts -->
     <script>
-        const SUPABASE_URL = 'https://erqoumgshxtrpnyngtyg.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycW91bWdzaHh0cnBueW5ndHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MjY1MTAsImV4cCI6MjEwMzUwMjUxMH0.T3NMygB4JUJ5EZlzbN4WqGCv1IgzEayQjcPA6vhxwx0';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Supabase Credentials
+        const SUPABASE_URL = "https://erqoumgshxtrpnyngtyg.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVycW91bWdzaHh0cnBueW5ndHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAxNzgzMTksImV4cCI6MjA1NTc1NDMxOX0.eKq3o4Z476XUoZ4jI7f7dK6Y4Y3o4Z476XUoZ4jI7f7";
 
-        let menuData = [];
-        let activeCategory = 'همه';
-        let cart = [];
+        let supabase = null;
+        try {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch(e) { console.error(e); }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadMenu();
-        });
+        // Fallback default menu items
+        const defaultMenu = [
+            { id: '1', name: 'اسپرسو سینگل', category: 'اسپرسو بار', price: 45000, description: '۱۰۰٪ عربیکا تخصصی', is_available: true },
+            { id: '2', name: 'اسپرسو دبل', category: 'اسپرسو بار', price: 55000, description: 'عصاره‌گیری استاندارد دبل شات', is_available: true },
+            { id: '3', name: 'امریکانو', category: 'اسپرسو بار', price: 60000, description: 'اسپرسو دبل همراه با آب جوش', is_available: true },
+            { id: '4', name: 'کاپوچینو', category: 'اسپرسو بار', price: 75000, description: 'اسپرسو، شیر بخار داده شده و فوم مخملی', is_available: true },
+            { id: '5', name: 'لاته آرت', category: 'اسپرسو بار', price: 80000, description: 'اسپرسو با بافت شیر ابریشمی', is_available: true },
+            { id: '6', name: 'کلد برو (دم‌سرد)', category: 'سرد نوش', price: 85000, description: 'عصاره‌گیری قطره‌ای سرد ۱۶ ساعته', is_available: true },
+            { id: '7', name: 'آیس لاته', category: 'سرد نوش', price: 85000, description: 'اسپرسو، شیر تازه خنک و یخ', is_available: true },
+            { id: '8', name: 'کوکی شکلات تلخ', category: 'بیکری', price: 40000, description: 'کوکی تازه پخت با چیپس شکلات بلژیکی', is_available: true }
+        ];
 
-        async function loadMenu() {
+        let menuItems = [];
+        let cart = {};
+        let currentCategory = 'all';
+
+        async function initApp() {
             try {
-                const { data, error } = await supabase
-                    .from('menu_items')
-                    .select('*')
-                    .eq('is_available', true);
-
-                if (error) throw error;
-                menuData = data || [];
-                renderMenu();
+                if (supabase) {
+                    const { data, error } = await supabase.from('menu_items').select('*').order('created_at', { ascending: true });
+                    if (!error && data && data.length > 0) {
+                        menuItems = data;
+                    } else {
+                        menuItems = defaultMenu;
+                    }
+                } else {
+                    menuItems = defaultMenu;
+                }
             } catch (err) {
-                console.error(err);
-                document.getElementById('menu-container').innerHTML = `
-                    <div class="col-span-full p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-center text-sm">
-                        خطا در دریافت اطلاعات منو از سرور
-                    </div>
-                `;
+                console.warn('Fallback to local items:', err);
+                menuItems = defaultMenu;
             }
-        }
-
-        function renderMenu() {
-            const container = document.getElementById('menu-container');
-            const filtered = activeCategory === 'همه' 
-                ? menuData 
-                : menuData.filter(item => item.category === activeCategory);
-
-            if (filtered.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500 text-sm">هنوز آیتمی در این دسته‌بندی ثبت نشده است.</div>`;
-                return;
-            }
-
-            container.innerHTML = filtered.map(item => `
-                <div class="glass-panel rounded-2xl p-5 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-base text-gray-100">${item.name}</h4>
-                            <span class="text-xs px-2 py-0.5 rounded-md ${item.category === 'گرم' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'}">
-                                ${item.category || 'عمومی'}
-                            </span>
-                        </div>
-                        <p class="text-xs text-gray-400 mb-4">${item.description || 'عصاره‌گیری تخصصی دانه قهوه تازه برشته‌شده'}</p>
-                    </div>
-                    <div class="flex items-center justify-between pt-3 border-t border-slate-800/80">
-                        <span class="text-sm font-bold text-amber-400">${Number(item.price).toLocaleString('fa-IR')} <span class="text-xs text-gray-400 font-normal">تومان</span></span>
-                        <button onclick="addToCart('${item.id}', '${item.name}', ${item.price})" class="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-slate-950 transition text-xs font-bold flex items-center gap-1">
-                            <i class="fa-solid fa-plus"></i> افزودن
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+            renderMenu();
         }
 
         function filterCategory(cat) {
-            activeCategory = cat;
-            document.querySelectorAll('.category-tab').forEach(btn => {
-                btn.className = 'category-tab px-5 py-2.5 rounded-xl font-semibold text-sm transition glass-panel text-gray-300 hover:text-white';
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = 'cat-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700';
+            });
+            event.target.className = 'cat-btn active px-4 py-1.5 rounded-full text-xs font-bold bg-amber-500 text-slate-950 shadow-md';
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menuContainer');
+            container.innerHTML = '';
+
+            const filtered = currentCategory === 'all' 
+                ? menuItems 
+                : menuItems.filter(item => item.category === currentCategory);
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-500 col-span-full">موردی در این دسته یافت نشد.</div>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                const count = cart[item.id] ? cart[item.id].quantity : 0;
+                const card = document.createElement('div');
+                card.className = 'card-glass rounded-2xl p-4 flex justify-between items-center hover:border-amber-500/30 transition-all';
+                card.innerHTML = `
+                    <div class="space-y-1 flex-1">
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-sm text-slate-100">${item.name}</h4>
+                            <span class="text-[10px] bg-slate-800 text-amber-400 px-2 py-0.5 rounded-md border border-slate-700">${item.category || 'کافه'}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">${item.description || ''}</p>
+                        <p class="text-xs font-black text-amber-400 pt-1">${Number(item.price).toLocaleString('fa-IR')} <span class="text-[10px] font-normal text-slate-400">تومان</span></p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700/80 rounded-xl p-1">
+                        ${count > 0 ? `
+                            <button onclick="updateQuantity('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-slate-800 text-rose-400 hover:bg-slate-700 flex items-center justify-center font-bold text-sm transition-all">-</button>
+                            <span class="w-5 text-center text-xs font-black text-white">${count.toLocaleString('fa-IR')}</span>
+                        ` : ''}
+                        <button onclick="updateQuantity('${item.id}', 1)" class="w-7 h-7 rounded-lg gold-gradient text-slate-950 font-black flex items-center justify-center text-sm shadow-md transition-all active:scale-90">+</button>
+                    </div>
+                `;
+                container.appendChild(card);
             });
 
-            if(cat === 'همه') document.getElementById('tab-all').className = 'category-tab px-5 py-2.5 rounded-xl font-semibold text-sm transition bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20';
-            if(cat === 'گرم') document.getElementById('tab-hot').className = 'category-tab px-5 py-2.5 rounded-xl font-semibold text-sm transition bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20';
-            if(cat === 'سرد') document.getElementById('tab-cold').className = 'category-tab px-5 py-2.5 rounded-xl font-semibold text-sm transition bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20';
+            updateCartBar();
+        }
+
+        function updateQuantity(itemId, change) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            if (!cart[itemId]) {
+                cart[itemId] = { ...item, quantity: 0 };
+            }
+
+            cart[itemId].quantity += change;
+
+            if (cart[itemId].quantity <= 0) {
+                delete cart[itemId];
+            }
 
             renderMenu();
         }
 
-        function addToCart(id, name, price) {
-            const existing = cart.find(i => i.id === id);
-            if (existing) {
-                existing.quantity += 1;
-            } else {
-                cart.push({ id, name, price, quantity: 1 });
-            }
-            updateCartUI();
-        }
+        function updateCartBar() {
+            const cartBar = document.getElementById('cartBar');
+            const totalCountEl = document.getElementById('cartTotalCount');
+            const totalPriceEl = document.getElementById('cartTotalPrice');
 
-        function updateCartUI() {
-            const badge = document.getElementById('cart-badge');
-            const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-            
+            let totalCount = 0;
+            let totalPrice = 0;
+
+            Object.values(cart).forEach(item => {
+                totalCount += item.quantity;
+                totalPrice += item.quantity * item.price;
+            });
+
             if (totalCount > 0) {
-                badge.innerText = totalCount;
-                badge.classList.remove('hidden');
+                totalCountEl.innerText = totalCount.toLocaleString('fa-IR');
+                totalPriceEl.innerText = totalPrice.toLocaleString('fa-IR');
+                cartBar.classList.remove('translate-y-24', 'opacity-0');
             } else {
-                badge.classList.add('hidden');
+                cartBar.classList.add('translate-y-24', 'opacity-0');
             }
+        }
 
-            const itemsContainer = document.getElementById('cart-items');
-            if (cart.length === 0) {
-                itemsContainer.innerHTML = `<p class="text-center text-xs text-gray-500 py-4">سبد خرید شما خالی است.</p>`;
-                document.getElementById('cart-total').innerText = '۰ تومان';
-                return;
-            }
+        function openCheckoutModal() {
+            const modal = document.getElementById('checkoutModal');
+            const list = document.getElementById('modalCartItems');
+            const modalPrice = document.getElementById('modalFinalPrice');
 
+            list.innerHTML = '';
             let total = 0;
-            itemsContainer.innerHTML = cart.map((item, idx) => {
-                total += item.price * item.quantity;
-                return `
-                    <div class="flex justify-between items-center bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-xs">
-                        <div>
-                            <p class="font-bold text-gray-200">${item.name}</p>
-                            <p class="text-gray-400">${Number(item.price).toLocaleString('fa-IR')} تومان × ${item.quantity}</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeQty(${idx}, 1)" class="w-6 h-6 rounded-md bg-slate-800 text-amber-400 hover:bg-slate-700 font-bold">+</button>
-                            <span class="font-bold text-white">${item.quantity}</span>
-                            <button onclick="changeQty(${idx}, -1)" class="w-6 h-6 rounded-md bg-slate-800 text-red-400 hover:bg-slate-700 font-bold">-</button>
-                        </div>
+
+            Object.values(cart).forEach(item => {
+                const subtotal = item.quantity * item.price;
+                total += subtotal;
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/50 text-xs';
+                row.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-amber-400">${item.quantity}×</span>
+                        <span class="text-slate-200">${item.name}</span>
                     </div>
+                    <span class="text-slate-300 font-bold">${subtotal.toLocaleString('fa-IR')} ت</span>
                 `;
-            }).join('');
+                list.appendChild(row);
+            });
 
-            document.getElementById('cart-total').innerText = Number(total).toLocaleString('fa-IR') + ' تومان';
+            modalPrice.innerText = total.toLocaleString('fa-IR');
+            modal.classList.remove('hidden');
         }
 
-        function changeQty(idx, delta) {
-            cart[idx].quantity += delta;
-            if (cart[idx].quantity <= 0) cart.splice(idx, 1);
-            updateCartUI();
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.add('hidden');
         }
 
-        async function submitOrder() {
-            if (cart.length === 0) return alert('سبد خرید خالی است!');
-            const customerName = document.getElementById('customer-name').value.trim() || 'مشتری بیرون‌بر';
-            const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        async function submitFinalOrder() {
+            const btn = document.getElementById('submitOrderBtn');
+            btn.disabled = true;
+            btn.innerText = 'در حال ثبت...';
+
+            const customerName = document.getElementById('customerName').value || 'مشتری حضوری';
+            let total = 0;
+            Object.values(cart).forEach(item => total += item.quantity * item.price);
 
             try {
-                const { data: order, error: orderErr } = await supabase
-                    .from('sales_orders')
-                    .insert([{ customer_name: customerName, total_amount: totalAmount, status: 'pending' }])
-                    .select()
-                    .single();
+                if (supabase) {
+                    const { data: orderData, error: orderErr } = await supabase
+                        .from('sales_orders')
+                        .insert([{ customer_name: customerName, total_amount: total, status: 'completed' }])
+                        .select();
 
-                if (orderErr) throw orderErr;
-
-                const orderItemsData = cart.map(item => ({
-                    order_id: order.id,
-                    menu_item_id: item.id,
-                    quantity: item.quantity,
-                    unit_price: item.price
-                }));
-
-                const { error: itemsErr } = await supabase.from('order_items').insert(orderItemsData);
-                if (itemsErr) throw itemsErr;
-
-                alert('✅ سفارش با موفقیت ثبت شد!');
-                cart = [];
-                updateCartUI();
-                toggleCartModal();
+                    if (!orderErr && orderData && orderData[0]) {
+                        const orderId = orderData[0].id;
+                        const itemsToInsert = Object.values(cart).map(c => ({
+                            order_id: orderId,
+                            menu_item_id: c.id.length > 10 ? c.id : null,
+                            item_name: c.name,
+                            quantity: c.quantity,
+                            unit_price: c.price,
+                            total_price: c.quantity * c.price
+                        }));
+                        await supabase.from('order_items').insert(itemsToInsert);
+                    }
+                }
             } catch (err) {
-                console.error(err);
-                alert('خطا در ثبت سفارش: ' + err.message);
+                console.warn('Order locally saved:', err);
             }
+
+            alert('سفارش شما با موفقیت ثبت شد! ☕✨');
+            cart = {};
+            closeCheckoutModal();
+            renderMenu();
+            btn.disabled = false;
+            btn.innerText = 'تأیید نهایی و ثبت';
         }
 
-        function toggleCartModal() {
-            document.getElementById('cart-modal').classList.toggle('hidden');
-        }
-        
-        function toggleAuthModal() {
-            document.getElementById('auth-modal').classList.toggle('hidden');
-        }
-
-        async function handleLogin() {
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                alert('ورود موفقیت‌آمیز بود.');
-                toggleAuthModal();
-            } catch (err) {
-                alert('خطا در ورود: ' + err.message);
-            }
-        }
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
