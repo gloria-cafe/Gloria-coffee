@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GLORIA ENTERPRISE OS</title>
+    <meta name="theme-color" content="#0b0e14">
+    <style>
+        :root {
+            --bg-main: #0b0e14;
+            --bg-sec: #121824;
+            --bg-card: #182030;
+            --accent: #d4af37;
+            --accent-glow: rgba(212, 175, 55, 0.25);
+            --text: #f3f4f6;
+            --text-dim: #94a3b8;
+            --danger: #f43f5e;
+            --success: #10b981;
+            --border: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg-main); color: var(--text); padding-bottom: 70px; min-height: 100vh; }
+
+        /* HEADER */
+        header { background: var(--bg-sec); border-bottom: 1px solid var(--border); padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .brand-name { font-size: 1.1rem; font-weight: 900; color: var(--accent); letter-spacing: 0.5px; }
+        .system-status { font-size: 0.75rem; background: rgba(16,185,129,0.15); color: var(--success); padding: 4px 10px; border-radius: 20px; font-weight: bold; }
+
+        /* TABS */
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+
+        /* POS CATEGORIES */
+        .cat-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 12px; }
+        .cat-bar::-webkit-scrollbar { display: none; }
+        .cat-btn { background: var(--bg-card); color: var(--text-dim); border: 1px solid var(--border); padding: 8px 16px; border-radius: 25px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+        .cat-btn.active { background: var(--accent); color: #000; font-weight: bold; border-color: var(--accent); }
+
+        /* PRODUCT GRID */
+        .grid-pos { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
+        .pos-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 15px 10px; text-align: center; cursor: pointer; transition: 0.15s; }
+        .pos-card:active { transform: scale(0.96); border-color: var(--accent); }
+        .pos-icon { font-size: 2rem; margin-bottom: 6px; }
+        .pos-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+        .pos-price { font-size: 0.8rem; color: var(--accent); font-weight: bold; }
+
+        /* CART FLOAT */
+        .cart-bar { position: fixed; bottom: 75px; left: 15px; right: 15px; background: rgba(18, 24, 36, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--accent); border-radius: 16px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; z-index: 90; box-shadow: 0 8px 25px rgba(0,0,0,0.6); }
+
+        /* SETTINGS & ADMIN FORMS */
+        .card-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+        .card-title { font-size: 0.95rem; font-weight: 800; color: var(--accent); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 0.78rem; color: var(--text-dim); margin-bottom: 5px; }
+        input, select, textarea { width: 100%; background: var(--bg-sec); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+        .btn { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 11px 18px; border-radius: 9px; cursor: pointer; width: 100%; font-size: 0.85rem; }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        /* STATS */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .stat-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+        .stat-title { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; }
+        .stat-val { font-size: 1.15rem; font-weight: 900; color: var(--accent); }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
+        th, td { padding: 9px; text-align: right; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-dim); }
+
+        /* NAV */
+        nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--bg-sec); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+        .nav-btn { flex: 1; border: none; background: none; color: var(--text-dim); font-size: 0.72rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
+        .nav-btn.active { color: var(--accent); font-weight: bold; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); z-index: 200; justify-content: center; align-items: center; padding: 20px; }
+        .modal-body { background: var(--bg-card); border: 1px solid var(--accent); border-radius: 16px; padding: 22px; width: 100%; max-width: 320px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <div class="brand-name" id="dispCafeName">GLORIA ENTERPRISE</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim);" id="dispSubtitle">سامانه آنلاین و ابری مدیریت کافه</div>
+        </div>
+        <div class="system-status" id="cloudStatus">● متصل به سیستم</div>
+    </header>
+
+    <!-- POS VIEW -->
+    <div id="viewPos" class="tab-content active">
+        <div class="cat-bar">
+            <button class="cat-btn active" onclick="filterPos('all', this)">همه اقلام</button>
+            <button class="cat-btn" onclick="filterPos('espresso', this)">اسپرسو بار</button>
+            <button class="cat-btn" onclick="filterPos('cold', this)">سرد و نوشیدنی</button>
+            <button class="cat-btn" onclick="filterPos('bakery', this)">کیک و دسر</button>
+        </div>
+        <div class="grid-pos" id="posItemsContainer"></div>
+
+        <div class="cart-bar" id="cartBar" style="display: none;">
+            <div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);" id="cartCount">۰ آیتم</div>
+                <div style="font-size: 1.05rem; font-weight: bold; color: var(--accent);" id="cartTotal">۰ تومان</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn" style="background: var(--border); color: #fff; width: auto; padding: 8px 12px;" onclick="clearCart()">حذف</button>
+                <button class="btn" style="width: auto; padding: 8px 16px;" onclick="checkoutOrder()">ثبت نهایی</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMAND CENTER VIEW -->
+    <div id="viewCommand" class="tab-content">
+        <div class="stats-row">
+            <div class="stat-item"><div class="stat-title">فروش کل</div><div class="stat-val" id="statSales">۰ ت</div></div>
+            <div class="stat-item"><div class="stat-title">تعداد سفارشات</div><div class="stat-val" id="statOrders">۰</div></div>
+            <div class="stat-item"><div class="stat-title">مجموع هزینه‌ها</div><div class="stat-val" style="color: var(--danger);" id="statExp">۰ ت</div></div>
+            <div class="stat-item"><div class="stat-title">سود خالص</div><div class="stat-val" style="color: var(--success);" id="statNet">۰ ت</div></div>
+        </div>
+
+        <!-- Menu Management -->
+        <div class="card-box">
+            <div class="card-title">طراحی و افزودن به منو</div>
+            <div class="form-group"><input type="text" id="mName" placeholder="نام محصول (مثلاً لته وانیل)"></div>
+            <div class="form-group" style="display: flex; gap: 8px;">
+                <input type="number" id="mPrice" placeholder="قیمت (تومان)">
+                <select id="mCat">
+                    <option value="espresso">اسپرسو بار</option>
+                    <option value="cold">سرد و نوشیدنی</option>
+                    <option value="bakery">کیک و دسر</option>
+                </select>
+                <input type="text" id="mIcon" placeholder="آیکون (☕/🧊/🍰)" style="max-width: 90px;">
+            </div>
+            <button class="btn" onclick="addMenuProduct()">افزودن مستقیم به منو</button>
+            
+            <table style="margin-top: 15px;">
+                <thead><tr><th>نام</th><th>قیمت</th><th>عملیات</th></tr></thead>
+                <tbody id="menuManageTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Cost Management -->
+        <div class="card-box">
+            <div class="card-title">حسابداری و هزینه‌ها</div>
+            <div class="form-group" style="display: flex; gap: 8px;">
+                <input type="text" id="expName" placeholder="شرح هزینه (خرید دانه قهوه)">
+                <input type="number" id="expVal" placeholder="مبلغ">
+            </div>
+            <button class="btn" onclick="saveExpense()">ثبت در دخل و خرج</button>
+        </div>
+    </div>
+
+    <!-- SYSTEM PREFERENCES (CONFIG) -->
+    <div id="viewSettings" class="tab-content">
+        <div class="card-box">
+            <div class="card-title">اطلاعات پایه و هویت کافه</div>
+            <div class="form-group">
+                <label class="form-label">نام تجاری کافه</label>
+                <input type="text" id="cfgCafeName" value="کافه گلوریا">
+            </div>
+            <div class="form-group">
+                <label class="form-label">زیرعنوان / اسلوگان</label>
+                <input type="text" id="cfgSubtitle" value="Specialty Coffee & Bakery">
+            </div>
+            <div class="form-group">
+                <label class="form-label">آیدی اینستاگرام</label>
+                <input type="text" id="cfgInstagram" value="cofee.gloria">
+            </div>
+            <div class="form-group">
+                <label class="form-label">متن زیر فاکتور مشتری</label>
+                <input type="text" id="cfgFooterText" value="از انتخاب و اعتماد شما سپاسگزاریم.">
+            </div>
+        </div>
+
+        <div class="card-box">
+            <div class="card-title">تنظیمات امنیت و رمز عبور</div>
+            <div class="form-group">
+                <label class="form-label">رمز عبور اتاق فرمان و تنظیمات</label>
+                <input type="password" id="cfgPin" placeholder="رمز فعلی: 1234">
+            </div>
+            <button class="btn" onclick="saveSystemSettings()">ذخیره تنظیمات سیستم</button>
+        </div>
+
+        <div class="card-box" style="border-color: var(--danger);">
+            <div class="card-title" style="color: var(--danger);">پایگاه داده و بازنشانی</div>
+            <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 12px;">تمام اطلاعات سیستم، فاکتورها و هزینه‌ها را پاک کرده و به تنظیمات اولیه بازمی‌گرداند.</p>
+            <button class="btn btn-danger" onclick="factoryReset()">ریست کامل سیستم به تنظیمات کارخانه</button>
+        </div>
+    </div>
+
+    <!-- PIN MODAL -->
+    <div class="modal" id="pinModal">
+        <div class="modal-body">
+            <div style="font-size: 2rem; margin-bottom: 8px;">🔐</div>
+            <div style="font-weight: bold; margin-bottom: 12px;">ورود به بخش امنیتی</div>
+            <input type="password" id="pinInput" placeholder="••••" style="text-align: center; font-size: 1.3rem; letter-spacing: 5px; margin-bottom: 15px;">
+            <div style="display: flex; gap: 8px;">
+                <button class="btn" style="background: var(--border); color: #fff;" onclick="closeModal()">انصراف</button>
+                <button class="btn" onclick="confirmPin()">ورود</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER NAVIGATION -->
+    <nav>
+        <button class="nav-btn active" id="btnPos" onclick="navTo('pos')">
+            <span>📦</span><span>صندوق</span>
+        </button>
+        <button class="nav-btn" id="btnCmd" onclick="requireAuth('command')">
+            <span>👑</span><span>اتاق فرمان</span>
+        </button>
+        <button class="nav-btn" id="btnCfg" onclick="requireAuth('settings')">
+            <span>⚙️</span><span>تنظیمات</span>
+        </button>
+    </nav>
+
+    <script>
+        const DEFAULT_ITEMS = [
+            { id: 1, name: 'اسپرسو سینگل', price: 45000, cat: 'espresso', icon: '☕' },
+            { id: 2, name: 'اسپرسو دبل', price: 60000, cat: 'espresso', icon: '☕' },
+            { id: 3, name: 'آمریکانو', price: 65000, cat: 'espresso', icon: '☕' },
+            { id: 4, name: 'لته آرت', price: 85000, cat: 'espresso', icon: '🥛' },
+            { id: 5, name: 'کاپوچینو', price: 85000, cat: 'espresso', icon: '☕' },
+            { id: 6, name: 'آیس لته', price: 90000, cat: 'cold', icon: '🧊' },
+            { id: 7, name: 'موهیتو دست‌ساز', price: 85000, cat: 'cold', icon: '🍃' },
+            { id: 8, name: 'چیزکیک نیویورکی', price: 110000, cat: 'bakery', icon: '🍰' },
+            { id: 9, name: 'کرواسان کره‌ای', price: 75000, cat: 'bakery', icon: '🥐' }
+        ];
+
+        let state = {
+            config: JSON.parse(localStorage.getItem('gloria_cfg')) || { name: 'GLORIA ENTERPRISE', sub: 'سیستم آنلاین کافه گلوریا', insta: 'cofee.gloria', footer: 'از همراهی شما سپاسگزاریم.', pin: '1234' },
+            menu: JSON.parse(localStorage.getItem('gloria_menu')) || DEFAULT_ITEMS,
+            orders: JSON.parse(localStorage.getItem('gloria_orders')) || [],
+            expenses: JSON.parse(localStorage.getItem('gloria_exp')) || [],
+            cart: [],
+            filter: 'all',
+            pendingTab: null
+        };
+
+        function saveState() {
+            localStorage.setItem('gloria_cfg', JSON.stringify(state.config));
+            localStorage.setItem('gloria_menu', JSON.stringify(state.menu));
+            localStorage.setItem('gloria_orders', JSON.stringify(state.orders));
+            localStorage.setItem('gloria_exp', JSON.stringify(state.expenses));
+            applyConfig();
+        }
+
+        function applyConfig() {
+            document.getElementById('dispCafeName').innerText = state.config.name;
+            document.getElementById('dispSubtitle').innerText = state.config.sub;
+            document.getElementById('cfgCafeName').value = state.config.name;
+            document.getElementById('cfgSubtitle').value = state.config.sub;
+            document.getElementById('cfgInstagram').value = state.config.insta;
+            document.getElementById('cfgFooterText').value = state.config.footer;
+        }
+
+        // POS
+        function renderPos() {
+            const el = document.getElementById('posItemsContainer');
+            el.innerHTML = '';
+            const list = state.filter === 'all' ? state.menu : state.menu.filter(x => x.cat === state.filter);
+            list.forEach(item => {
+                const d = document.createElement('div');
+                d.className = 'pos-card';
+                d.onclick = () => { state.cart.push(item); updateCart(); };
+                d.innerHTML = `<div class="pos-icon">${item.icon || '☕'}</div><div class="pos-title">${item.name}</div><div class="pos-price">${Number(item.price).toLocaleString('fa-IR')} ت</div>`;
+                el.appendChild(d);
+            });
+        }
+
+        function filterPos(c, btn) {
+            state.filter = c;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            renderPos();
+        }
+
+        function updateCart() {
+            const bar = document.getElementById('cartBar');
+            if(state.cart.length === 0) { bar.style.display = 'none'; return; }
+            bar.style.display = 'flex';
+            const total = state.cart.reduce((s, i) => s + Number(i.price), 0);
+            document.getElementById('cartCount').innerText = `${state.cart.length} آیتم انتخاب شده`;
+            document.getElementById('cartTotal').innerText = `${total.toLocaleString('fa-IR')} تومان`;
+        }
+
+        function clearCart() { state.cart = []; updateCart(); }
+
+        function checkoutOrder() {
+            if(state.cart.length === 0) return;
+            const total = state.cart.reduce((s, i) => s + Number(i.price), 0);
+            state.orders.push({ id: Date.now(), items: state.cart, total, time: new Date().toISOString() });
+            saveState();
+            clearCart();
+            alert('فاکتور با موفقیت ثبت شد!');
+            renderStats();
+        }
+
+        // ADMIN
+        function renderStats() {
+            const sales = state.orders.reduce((s, o) => s + Number(o.total), 0);
+            const exp = state.expenses.reduce((s, e) => s + Number(e.amount), 0);
+            document.getElementById('statSales').innerText = `${sales.toLocaleString('fa-IR')} ت`;
+            document.getElementById('statOrders').innerText = state.orders.length.toLocaleString('fa-IR');
+            document.getElementById('statExp').innerText = `${exp.toLocaleString('fa-IR')} ت`;
+            document.getElementById('statNet').innerText = `${(sales - exp).toLocaleString('fa-IR')} ت`;
+
+            // Menu admin
+            const tb = document.getElementById('menuManageTable');
+            tb.innerHTML = '';
+            state.menu.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${m.icon || '☕'} ${m.name}</td><td>${Number(m.price).toLocaleString('fa-IR')} ت</td><td><button onclick="removeMenu(${m.id})" style="color:var(--danger); background:none; border:none; cursor:pointer;">حذف</button></td>`;
+                tb.appendChild(tr);
+            });
+        }
+
+        function addMenuProduct() {
+            const name = document.getElementById('mName').value.trim();
+            const price = parseFloat(document.getElementById('mPrice').value);
+            const cat = document.getElementById('mCat').value;
+            const icon = document.getElementById('mIcon').value.trim() || '☕';
+            if(!name || isNaN(price)) return alert('نام و قیمت را وارد کنید');
+            state.menu.push({ id: Date.now(), name, price, cat, icon });
+            saveState();
+            document.getElementById('mName').value = '';
+            document.getElementById('mPrice').value = '';
+            document.getElementById('mIcon').value = '';
+            renderPos();
+            renderStats();
+            alert('محصول اضافه شد.');
+        }
+
+        function removeMenu(id) {
+            state.menu = state.menu.filter(x => x.id !== id);
+            saveState();
+            renderPos();
+            renderStats();
+        }
+
+        function saveExpense() {
+            const title = document.getElementById('expName').value.trim();
+            const amount = parseFloat(document.getElementById('expVal').value);
+            if(!title || isNaN(amount)) return alert('عنوان و مبلغ را وارد کنید');
+            state.expenses.push({ id: Date.now(), title, amount });
+            saveState();
+            document.getElementById('expName').value = '';
+            document.getElementById('expVal').value = '';
+            renderStats();
+            alert('هزینه ثبت شد.');
+        }
+
+        // SETTINGS
+        function saveSystemSettings() {
+            state.config.name = document.getElementById('cfgCafeName').value.trim() || state.config.name;
+            state.config.sub = document.getElementById('cfgSubtitle').value.trim() || state.config.sub;
+            state.config.insta = document.getElementById('cfgInstagram').value.trim() || state.config.insta;
+            state.config.footer = document.getElementById('cfgFooterText').value.trim() || state.config.footer;
+            const newPin = document.getElementById('cfgPin').value.trim();
+            if(newPin) state.config.pin = newPin;
+            saveState();
+            alert('تمام تنظیمات سیستم ذخیره شدند.');
+        }
+
+        function factoryReset() {
+            if(confirm('آیا از ریست کامل مطمئن هستید؟ تمام اطلاعات سیستم پاک خواهند شد.')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // NAVIGATION & AUTH
+        function navTo(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            if(tab === 'pos') {
+                document.getElementById('viewPos').classList.add('active');
+                document.getElementById('btnPos').classList.add('active');
+            } else if(tab === 'command') {
+                document.getElementById('viewCommand').classList.add('active');
+                document.getElementById('btnCmd').classList.add('active');
+                renderStats();
+            } else if(tab === 'settings') {
+                document.getElementById('viewSettings').classList.add('active');
+                document.getElementById('btnCfg').classList.add('active');
+                applyConfig();
+            }
+        }
+
+        function requireAuth(tab) {
+            state.pendingTab = tab;
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('pinModal').style.display = 'none'; }
+
+        function confirmPin() {
+            const val = document.getElementById('pinInput').value;
+            if(val === state.config.pin) {
+                closeModal();
+                navTo(state.pendingTab);
+            } else {
+                alert('رمز عبور صحیح نیست!');
+            }
+        }
+
+        // INIT
+        applyConfig();
+        renderPos();
+    </script>
+</body>
+</html>
+
