@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gloria Executive OS | سیستم اختصاصی مدیریت کافه گلوریا</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Vazirmatn', sans-serif; }
+        body { background: radial-gradient(circle at top right, #1a1610, #090b10 80%); color: #f1f5f9; min-height: 100vh; }
+        .gold-glow { box-shadow: 0 0 25px rgba(217, 119, 6, 0.25); }
+        .gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #aa7c11 50%, #594107 100%); }
+        .gold-btn { background: linear-gradient(135deg, #f59e0b, #b45309); color: #000; font-weight: 800; }
+        .gold-btn:hover { background: linear-gradient(135deg, #fbbf24, #d97706); }
+        .card-executive { background: rgba(18, 22, 34, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(212, 175, 55, 0.18); border-radius: 1.25rem; }
+        .tab-btn.active { background: linear-gradient(135deg, #d97706, #92400e); color: #ffffff; border-color: #fbbf24; box-shadow: 0 4px 20px rgba(217, 119, 6, 0.35); }
+        /* انیمیشن نوتیفیکیشن لوکس */
+        @keyframes slideInDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-animate { animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="pb-16 selection:bg-amber-500 selection:text-black">
+
+    <!-- نوتیفیکیشن زنده فروش برای مدیر -->
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] w-11/12 max-w-md space-y-2 pointer-events-none"></div>
+
+    <!-- هدر VIP سیستم -->
+    <header class="card-executive sticky top-0 z-40 mx-3 my-2 px-4 py-3 shadow-2xl border-amber-500/30">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- لوگو و برند -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl gold-gradient flex items-center justify-center text-xl shadow-lg shadow-amber-500/20 border border-amber-300/40">☕</div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg font-black tracking-wide bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-600 bg-clip-text text-transparent">GLORIA COFFEE</h1>
+                        <span class="text-[10px] bg-amber-500/20 border border-amber-400/40 text-amber-300 px-2 py-0.5 rounded-full font-bold">نسخه مدیر ارشد</span>
+                    </div>
+                    <!-- ساعت و تقویم فوق دقیق شمسی -->
+                    <div id="live-clock" class="text-xs text-zinc-400 font-medium tracking-wide flex items-center gap-1.5 mt-0.5">
+                        در حال بارگذاری زمان دقیق...
+                    </div>
+                </div>
+            </div>
+
+            <!-- دکمه سوییچ بین صندوق و پنل مدیریت -->
+            <div class="flex items-center gap-2">
+                <button onclick="openModal('modal-auth')" id="manager-entry-btn" class="px-4 py-2 rounded-xl gold-btn text-xs tracking-wide shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 transition flex items-center gap-2">
+                    <span>داشبورد مدیریت</span> 👑
+                </button>
+            </div>
+        </div>
+
+        <!-- منو ناوبری سریع -->
+        <nav class="max-w-7xl mx-auto flex gap-2 mt-3 overflow-x-auto pb-1" id="main-nav">
+            <button onclick="switchTab('pos')" id="tab-btn-pos" class="tab-btn active flex-1 py-2 px-3 rounded-xl text-xs md:text-sm font-bold transition border border-zinc-800 bg-zinc-900/90 text-zinc-300 whitespace-nowrap">🛒 صندوق و سفارش‌گیر</button>
+            <button onclick="switchTab('shift')" id="tab-btn-shift" class="tab-btn flex-1 py-2 px-3 rounded-xl text-xs md:text-sm font-bold transition border border-zinc-800 bg-zinc-900/90 text-zinc-300 whitespace-nowrap">📋 شیفت و هزینه‌ها</button>
+            <button onclick="switchTab('archive')" id="tab-btn-archive" class="tab-btn flex-1 py-2 px-3 rounded-xl text-xs md:text-sm font-bold transition border border-zinc-800 bg-zinc-900/90 text-zinc-300 whitespace-nowrap">📦 بایگانی فاکتورها</button>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-3 mt-4">
+
+        <!-- ======================= بخش ۱: صندوق فروش لوکس ======================= -->
+        <section id="section-pos" class="space-y-4">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                
+                <!-- منوی محصولات -->
+                <div class="lg:col-span-2 space-y-3">
+                    <!-- دسته‌بندی‌ها -->
+                    <div class="flex gap-2 overflow-x-auto pb-1" id="category-filters">
+                        <button onclick="filterCategory('همه')" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-black shadow-md shadow-amber-500/20">همه آیتم‌ها</button>
+                        <button onclick="filterCategory('گرم')" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white">اسپرسو و گرم</button>
+                        <button onclick="filterCategory('سرد')" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white">سرد و بارتندری</button>
+                        <button onclick="filterCategory('کیک')" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white">کیک و بیکری</button>
+                    </div>
+
+                    <!-- گرید کارت‌های آیتم‌ها -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="menu-grid"></div>
+                </div>
+
+                <!-- فاکتور لمسی صندوق -->
+                <div class="card-executive p-4 flex flex-col justify-between h-fit lg:sticky lg:top-28">
+                    <div>
+                        <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+                            <h2 class="font-bold text-sm text-amber-400 flex items-center gap-2">
+                                <span>🧾 فاکتور جاری</span>
+                            </h2>
+                            <button onclick="clearCart()" class="text-xs text-rose-400 hover:underline">خالی کردن</button>
+                        </div>
+                        
+                        <div id="cart-items" class="divide-y divide-zinc-800 max-h-64 overflow-y-auto my-2 pr-1 space-y-1">
+                            <p class="text-center text-xs text-zinc-500 py-10">هیچ آیتمی در فاکتور نیست</p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-zinc-800/80 pt-3 space-y-3">
+                        <div class="bg-zinc-900/90 p-3 rounded-xl border border-zinc-800 flex justify-between items-center">
+                            <span class="text-xs text-zinc-400 font-bold">مبلغ قابل پرداخت:</span>
+                            <span id="cart-total" class="text-lg font-black text-amber-400">۰ تومان</span>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-zinc-400 mb-1.5">نحوه تسویه حساب:</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="payment_type" value="کارتخوان" checked class="peer sr-only">
+                                    <div class="text-center py-2.5 rounded-xl text-xs font-bold border border-zinc-800 bg-zinc-900 text-zinc-300 peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-black transition">کارتخوان 💳</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="payment_type" value="نقدی" class="peer sr-only">
+                                    <div class="text-center py-2.5 rounded-xl text-xs font-bold border border-zinc-800 bg-zinc-900 text-zinc-300 peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-black transition">نقدی 💵</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button onclick="submitOrder()" class="w-full py-3.5 rounded-xl gold-btn text-xs md:text-sm font-black shadow-xl shadow-amber-500/20 active:scale-95 transition">
+                            ثبت نهایی و ارسال به سیستم مدیر ✓
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ======================= بخش ۲: شیفت و تنخواه ======================= -->
+        <section id="section-shift" class="hidden space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- ثبت هزینه -->
+                <div class="card-executive p-5 space-y-3">
+                    <h3 class="font-bold text-sm text-amber-400">ثبت هزینه تنخواه شیفت</h3>
+                    <p class="text-xs text-zinc-400">خریدهای روزانه (شیر، سیروپ، یخ و...)</p>
+                    
+                    <input type="text" id="expense-title" placeholder="عنوان خرید (مثلاً: شیر کاله)" class="w-full p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:border-amber-500 outline-none">
+                    <input type="number" id="expense-amount" placeholder="مبلغ به تومان" class="w-full p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:border-amber-500 outline-none">
+                    
+                    <button onclick="addExpense()" class="w-full py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition">ثبت هزینه در حساب</button>
+
+                    <div class="pt-3 border-t border-zinc-800">
+                        <h4 class="text-xs font-bold text-zinc-400 mb-2">فهرست تنخواه‌های ثبت‌شده:</h4>
+                        <div id="shift-expenses-list" class="space-y-1.5 max-h-40 overflow-y-auto text-xs">
+                            <p class="text-zinc-500 text-center py-2">هزینه‌ای ثبت نشده</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- آمار مالی شیفت -->
+                <div class="md:col-span-2 card-executive p-5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-sm text-zinc-100 mb-4 flex items-center justify-between">
+                            <span>صورت‌وضعیت مالی شیفت فعلی</span>
+                            <span class="text-xs font-normal text-amber-400/80">محاسبه درلحظه</span>
+                        </h3>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div class="bg-zinc-900/80 p-3.5 rounded-xl border border-blue-500/20">
+                                <p class="text-[11px] text-zinc-400">فروش کارتخوان</p>
+                                <p id="stat-pos-card" class="text-base font-black text-blue-400 mt-1">۰ ت</p>
+                            </div>
+                            <div class="bg-zinc-900/80 p-3.5 rounded-xl border border-emerald-500/20">
+                                <p class="text-[11px] text-zinc-400">فروش نقدی</p>
+                                <p id="stat-pos-cash" class="text-base font-black text-emerald-400 mt-1">۰ ت</p>
+                            </div>
+                            <div class="bg-zinc-900/80 p-3.5 rounded-xl border border-rose-500/20">
+                                <p class="text-[11px] text-zinc-400">هزینه‌های تنخواه</p>
+                                <p id="stat-expenses" class="text-base font-black text-rose-400 mt-1">۰ ت</p>
+                            </div>
+                            <div class="bg-zinc-900/80 p-3.5 rounded-xl border border-amber-500/40">
+                                <p class="text-[11px] text-amber-300 font-bold">سود نهایی شیفت</p>
+                                <p id="stat-net-profit" class="text-base font-black text-amber-400 mt-1">۰ ت</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-zinc-800">
+                        <button onclick="closeShift()" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-black rounded-xl text-xs sm:text-sm transition shadow-lg shadow-amber-600/20">
+                            🔒 صدور ترازنامه و بستن نهایی شیفت کاری
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= بخش ۳: بایگانی فاکتورها ======================= -->
+        <section id="section-archive" class="hidden space-y-4">
+            <div class="card-executive p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-sm text-zinc-100">بایگانی تراکنش‌ها و سفارشات</h3>
+                    <span id="archive-count" class="text-xs bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full border border-amber-500/30">۰ سفارش ثبت شده</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-xs">
+                        <thead class="text-zinc-400 bg-zinc-900/80 border-b border-zinc-800">
+                            <tr>
+                                <th class="p-3">شناسه فاکتور</th>
+                                <th class="p-3">زمان ثبت دقیق</th>
+                                <th class="p-3">ریز اقلام</th>
+                                <th class="p-3">نوع تسویه</th>
+                                <th class="p-3">مبلغ پرداختی</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archive-table-body" class="divide-y divide-zinc-800/60">
+                            <tr><td colspan="5" class="text-center py-8 text-zinc-500">هیچ فاکتوری بایگانی نشده است</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= بخش ۴: داشبورد مجزا و VIP مدیر ======================= -->
+        <section id="section-manager-dashboard" class="hidden space-y-6">
+            <div class="card-executive p-6 border-amber-500/40 relative overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-zinc-800">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">👑</span>
+                            <h2 class="text-lg font-black text-amber-400">داشبورد فرماندهی مدیریت | Gloria Executive</h2>
+                        </div>
+                        <p class="text-xs text-zinc-400 mt-1">مانیتورینگ لحظه‌ای، مدیریت نرخ‌ها، تنظیمات پرسنل و دسترسی سریع</p>
+                    </div>
+                    <button onclick="exitManagerDashboard()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs rounded-xl font-bold transition">خروج از پنل مدیر ✕</button>
+                </div>
+
+                <!-- کارت‌های آماری کلیدی مدیر -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
+                    <div class="bg-zinc-900/90 p-4 rounded-2xl border border-amber-500/30">
+                        <p class="text-xs text-zinc-400">مجموع دخل کل سیستم</p>
+                        <p id="mgmt-total-sales" class="text-xl font-black text-amber-400 mt-2">۰ تومان</p>
+                    </div>
+                    <div class="bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
+                        <p class="text-xs text-zinc-400">کل فاکتورهای صادر شده</p>
+                        <p id="mgmt-total-orders" class="text-xl font-black text-blue-400 mt-2">۰ عدد</p>
+                    </div>
+                    <div class="bg-zinc-900/90 p-4 rounded-2xl border border-zinc-800">
+                        <p class="text-xs text-zinc-400">محبوب‌ترین آیتم کافه</p>
+                        <p id="mgmt-top-item" class="text-sm font-black text-emerald-400 mt-2">اسپرسو دبل</p>
+                    </div>
+                </div>
+
+                <!-- بخش مدیریت قیمت و منوی کافه -->
+                <div class="mt-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                            <span>☕ مدیریت نرخ و افزودن به منو</span>
+                        </h3>
+                        <button onclick="saveAllMenuPrices()" class="px-4 py-2 gold-btn text-xs rounded-xl transition shadow-lg shadow-amber-500/20">ذخیره تمام تغییرات قیمت ✓</button>
+                    </div>
+
+                    <div id="manager-menu-table" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
+                        <!-- اقلام قابل ویرایش -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- مودال ورود امن مدیر -->
+    <div id="modal-auth" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="card-executive w-full max-w-sm p-6 border-amber-500/50 space-y-4">
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 rounded-2xl gold-gradient mx-auto flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">👑</div>
+                <h3 class="text-base font-black text-amber-400 pt-2">ورود به پنل مدیر ارشد</h3>
+                <p class="text-xs text-zinc-400">رمز عبور امنیتی خود را وارد نمایید</p>
+            </div>
+            
+            <input type="password" id="admin-pass-input" placeholder="••••" class="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-base text-center tracking-widest text-amber-400 font-bold focus:border-amber-500 outline-none">
+            
+            <div class="flex gap-2">
+                <button onclick="verifyAdmin()" class="flex-1 py-3 gold-btn rounded-xl text-xs font-black transition">تایید و ورود</button>
+                <button onclick="closeModal('modal-auth')" class="px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 rounded-xl text-xs font-bold transition">انصراف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- اسکریپت جاوااسکریپت فوق‌العاده استاندارد و یکپارچه -->
+    <script>
+        // منوی استاندارد کافه گلوریا
+        const baseMenu = [
+            { id: 1, name: 'اسپرسو سینگل', price: 40000, cat: 'گرم', icon: '☕' },
+            { id: 2, name: 'اسپرسو دبل', price: 50000, cat: 'گرم', icon: '☕' },
+            { id: 3, name: 'آمریکانو', price: 58000, cat: 'گرم', icon: '☕' },
+            { id: 4, name: 'کاپوچینو', price: 70000, cat: 'گرم', icon: '🥛' },
+            { id: 5, name: 'لته آرت', price: 75000, cat: 'گرم', icon: '🎨' },
+            { id: 6, name: 'کارامل ماکیاتو', price: 82000, cat: 'گرم', icon: '🍯' },
+            { id: 7, name: 'آیس لته', price: 78000, cat: 'سرد', icon: '🧊' },
+            { id: 8, name: 'آیس آمریکانو', price: 62000, cat: 'سرد', icon: '🧊' },
+            { id: 9, name: 'شیک نوتلا مخصوص', price: 98000, cat: 'سرد', icon: '🍫' },
+            { id: 10, name: 'چیزکیک سن سباستین', price: 90000, cat: 'کیک', icon: '🍰' },
+            { id: 11, name: 'کروسان کره‌ای', price: 68000, cat: 'کیک', icon: '🥐' },
+            { id: 12, name: 'وافل شکلات بلژیکی', price: 95000, cat: 'کیک', icon: '🧇' }
+        ];
+
+        // خواندن داده‌ها از حافظه
+        let menuItems = JSON.parse(localStorage.getItem('gloria_menu')) || baseMenu;
+        let cart = [];
+        let orders = JSON.parse(localStorage.getItem('gloria_orders')) || [];
+        let expenses = JSON.parse(localStorage.getItem('gloria_expenses')) || [];
+
+        // زمان دقیق و زنده فارسی (شمسی)
+        function updateLiveClock() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            
+            const persianDate = now.toLocaleDateString('fa-IR', dateOptions);
+            const persianTime = now.toLocaleTimeString('fa-IR', timeOptions);
+            
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) {
+                clockEl.innerHTML = `<span>🗓️ ${persianDate}</span> <span class="text-zinc-600">|</span> <span class="text-amber-400 font-bold font-mono">⏰ ${persianTime}</span>`;
+            }
+        }
+        setInterval(updateLiveClock, 1000);
+        updateLiveClock();
+
+        // تعویض تب‌ها
+        function switchTab(tabId) {
+            document.getElementById('section-manager-dashboard').classList.add('hidden');
+            document.getElementById('main-nav').classList.remove('hidden');
+
+            ['pos', 'shift', 'archive'].forEach(id => {
+                document.getElementById(`section-${id}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${id}`).classList.remove('active');
+            });
+
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+
+            if (tabId === 'shift') updateShiftStats();
+            if (tabId === 'archive') renderArchive();
+        }
+
+        // رندر منوی فروش
+        function renderMenu(category = 'همه') {
+            const grid = document.getElementById('menu-grid');
+            grid.innerHTML = '';
+            
+            const filtered = category === 'همه' ? menuItems : menuItems.filter(i => i.cat === category);
+            
+            filtered.forEach(item => {
+                const card = document.createElement('button');
+                card.onclick = () => addToCart(item);
+                card.className = "card-executive p-3 text-right hover:border-amber-500/60 transition active:scale-95 flex flex-col justify-between group";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center w-full">
+                        <span class="text-2xl">${item.icon}</span>
+                        <span class="text-[10px] text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded-full border border-zinc-800">${item.cat}</span>
+                    </div>
+                    <div class="mt-3">
+                        <h4 class="text-xs font-bold text-zinc-200 group-hover:text-amber-400 transition">${item.name}</h4>
+                        <p class="text-xs font-black text-amber-400 mt-1">${item.price.toLocaleString('fa-IR')} <span class="text-[10px] font-normal text-zinc-500">تومان</span></p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCategory(cat) {
+            renderMenu(cat);
+        }
+
+        // سبد سفارش
+        function addToCart(item) {
+            const existing = cart.find(c => c.id === item.id);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...item, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(c => c.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(c => c.id !== id);
+            }
+            renderCart();
+        }
+
+        function clearCart() {
+            cart = [];
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-zinc-500 py-10">هیچ آیتمی در فاکتور نیست</p>`;
+                document.getElementById('cart-total').innerText = '۰ تومان';
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex items-center justify-between py-2 border-b border-zinc-800/40">
+                    <div>
+                        <p class="text-xs font-bold text-zinc-200">${item.name}</p>
+                        <p class="text-[10px] text-amber-400">${(item.price * item.qty).toLocaleString('fa-IR')} تومان</p>
+                    </div>
+                    <div class="flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded-lg border border-zinc-800">
+                        <button onclick="changeQty(${item.id}, 1)" class="text-zinc-300 font-bold px-1.5 hover:text-amber-400">+</button>
+                        <span class="text-xs font-bold text-white px-1 font-mono">${item.qty}</span>
+                        <button onclick="changeQty(${item.id}, -1)" class="text-zinc-300 font-bold px-1.5 hover:text-rose-400">-</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            document.getElementById('cart-total').innerText = total.toLocaleString('fa-IR') + ' تومان';
+        }
+
+        // پیام و نوتیفیکیشن اختصاصی فروش برای مدیر
+        function showManagerNotification(order) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = "toast-animate card-executive p-4 border border-amber-400 bg-zinc-950/95 shadow-2xl rounded-2xl flex items-center gap-3";
+            toast.innerHTML = `
+                <div class="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center text-lg flex-shrink-0">🔔</div>
+                <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-amber-400">سفارش جدید صادر شد!</span>
+                        <span class="text-[10px] text-zinc-400 font-mono">${order.time}</span>
+                    </div>
+                    <p class="text-xs text-zinc-200 font-bold mt-0.5">${order.items}</p>
+                    <div class="flex justify-between items-center mt-1 text-[11px]">
+                        <span class="text-zinc-400">${order.payment}</span>
+                        <span class="text-amber-300 font-black">${order.total.toLocaleString('fa-IR')} ت</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(toast);
+
+            // حذف خودکار بعد از ۵ ثانیه
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = '0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }, 5000);
+        }
+
+        // ثبت نهایی سفارش
+        function submitOrder() {
+            if (cart.length === 0) {
+                alert('لطفاً حداقل یک نوشیدنی یا کیک به فاکتور اضافه کنید.');
+                return;
+            }
+
+            const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('fa-IR');
+            const timeStr = now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            const newOrder = {
+                id: 'GLR-' + Math.floor(1000 + Math.random() * 9000),
+                fullDate: dateStr,
+                time: timeStr,
+                items: cart.map(i => `${i.name} (${i.qty})`).join('، '),
+                payment: paymentType,
+                total: total
+            };
+
+            orders.unshift(newOrder);
+            localStorage.setItem('gloria_orders', JSON.stringify(orders));
+
+            // ارسال نوتیفیکیشن لوکس
+            showManagerNotification(newOrder);
+
+            clearCart();
+        }
+
+        // ثبت هزینه تنخواه
+        function addExpense() {
+            const title = document.getElementById('expense-title').value.trim();
+            const amount = parseInt(document.getElementById('expense-amount').value);
+
+            if (!title || isNaN(amount) || amount <= 0) {
+                alert('لطفاً عنوان و مبلغ هزینه را به درستی وارد کنید.');
+                return;
+            }
+
+            const now = new Date();
+            expenses.unshift({
+                title,
+                amount,
+                time: now.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
+            });
+
+            localStorage.setItem('gloria_expenses', JSON.stringify(expenses));
+            document.getElementById('expense-title').value = '';
+            document.getElementById('expense-amount').value = '';
+            
+            updateShiftStats();
+        }
+
+        function updateShiftStats() {
+            const cardTotal = orders.filter(o => o.payment === 'کارتخوان').reduce((s, o) => s + o.total, 0);
+            const cashTotal = orders.filter(o => o.payment === 'نقدی').reduce((s, o) => s + o.total, 0);
+            const expTotal = expenses.reduce((s, e) => s + e.amount, 0);
+            const net = (cardTotal + cashTotal) - expTotal;
+
+            document.getElementById('stat-pos-card').innerText = cardTotal.toLocaleString('fa-IR') + ' ت';
+            document.getElementById('stat-pos-cash').innerText = cashTotal.toLocaleString('fa-IR') + ' ت';
+            document.getElementById('stat-expenses').innerText = expTotal.toLocaleString('fa-IR') + ' ت';
+            document.getElementById('stat-net-profit').innerText = net.toLocaleString('fa-IR') + ' ت';
+
+            const expList = document.getElementById('shift-expenses-list');
+            if (expenses.length === 0) {
+                expList.innerHTML = `<p class="text-zinc-500 text-center py-2">هزینه‌ای ثبت نشده</p>`;
+            } else {
+                expList.innerHTML = expenses.map(e => `
+                    <div class="flex justify-between items-center bg-zinc-900/80 p-2 rounded-lg border border-zinc-800">
+                        <span class="text-zinc-300">${e.title}</span>
+                        <span class="text-rose-400 font-bold font-mono">${e.amount.toLocaleString('fa-IR')} ت</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function closeShift() {
+            if (confirm('مدیر محترم، آیا از بستن و صدور ترازنامه شیفت جاری مطمئن هستید؟')) {
+                alert('شیفت جاری با موفقیت بسته شد و آمار بایگانی گردید.');
+                orders = [];
+                expenses = [];
+                localStorage.removeItem('gloria_orders');
+                localStorage.removeItem('gloria_expenses');
+                updateShiftStats();
+                renderArchive();
+            }
+        }
+
+        // رندر جدول بایگانی فاکتورها
+        function renderArchive() {
+            const tbody = document.getElementById('archive-table-body');
+            document.getElementById('archive-count').innerText = `${orders.length} فاکتور ثبت شده`;
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-zinc-500">هیچ فاکتوری بایگانی نشده است</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = orders.map(o => `
+                <tr class="hover:bg-zinc-800/40 border-b border-zinc-800/40">
+                    <td class="p-3 font-mono text-amber-400 font-bold">${o.id}</td>
+                    <td class="p-3 text-zinc-400">${o.fullDate ? o.fullDate + ' - ' : ''}${o.time}</td>
+                    <td class="p-3 text-zinc-200">${o.items}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded-lg text-[10px] ${o.payment === 'نقدی' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-blue-950 text-blue-400 border border-blue-800'}">${o.payment}</span></td>
+                    <td class="p-3 font-black text-amber-300">${o.total.toLocaleString('fa-IR')} ت</td>
+                </tr>
+            `).join('');
+        }
+
+        // ================= بخش اختصاصی مدیر =================
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function verifyAdmin() {
+            const val = document.getElementById('admin-pass-input').value;
+            if (val === '1234' || val === 'gloria') {
+                closeModal('modal-auth');
+                document.getElementById('admin-pass-input').value = '';
+                openManagerDashboard();
+            } else {
+                alert('رمز عبور امنیتی اشتباه است!');
+            }
+        }
+
+        function openManagerDashboard() {
+            ['pos', 'shift', 'archive'].forEach(id => {
+                document.getElementById(`section-${id}`).classList.add('hidden');
+            });
+            document.getElementById('main-nav').classList.add('hidden');
+            document.getElementById('section-manager-dashboard').classList.remove('hidden');
+
+            // آپدیت آمارهای داشبورد مدیر
+            const totalSales = orders.reduce((s, o) => s + o.total, 0);
+            document.getElementById('mgmt-total-sales').innerText = totalSales.toLocaleString('fa-IR') + ' ت';
+            document.getElementById('mgmt-total-orders').innerText = orders.length + ' سفارش';
+
+            // رندر لیست قیمت‌های منو
+            const list = document.getElementById('manager-menu-table');
+            list.innerHTML = menuItems.map(item => `
+                <div class="card-executive p-3 bg-zinc-900/90 flex items-center justify-between border border-zinc-800">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">${item.icon}</span>
+                        <div>
+                            <p class="text-xs font-bold text-zinc-200">${item.name}</p>
+                            <span class="text-[10px] text-zinc-500">${item.cat}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <input type="number" id="price-input-${item.id}" value="${item.price}" class="w-24 p-1.5 rounded-lg bg-zinc-950 border border-zinc-700 text-xs text-center text-amber-400 font-bold outline-none focus:border-amber-500">
+                        <span class="text-[10px] text-zinc-400">تومان</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exitManagerDashboard() {
+            switchTab('pos');
+        }
+
+        function saveAllMenuPrices() {
+            menuItems.forEach(item => {
+                const input = document.getElementById(`price-input-${item.id}`);
+                if (input) {
+                    item.price = parseInt(input.value) || item.price;
+                }
+            });
+            localStorage.setItem('gloria_menu', JSON.stringify(menuItems));
+            renderMenu();
+            alert('✓ تمامی نرخ‌ها با موفقیت در کل سیستم کافه گلوریا بروزرسانی شدند.');
+        }
+
+        window.onload = function() {
+            renderMenu();
+        };
+    </script>
+</body>
+</html>
